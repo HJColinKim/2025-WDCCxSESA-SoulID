@@ -1,26 +1,45 @@
 import { X } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
+// An array of names to be chosen from randomly
+const nigerianNames = [
+  "Adekunle", 
+  "Amadi", 
+  "Uzoma", 
+  "Babatunde", 
+  "Chidi", 
+  "Emeka", 
+  "Oluwaseun"
+];
+
 // Define the props for the component, including the onClose function
 type NigerianPrincePopupProps = {
   onClose: () => void;
 };
 
 const NigerianPrincePopup: React.FC<NigerianPrincePopupProps> = ({ onClose }) => {
-  // State to hold the random position, same as your template
+  // State to hold the random position
   const [position, setPosition] = useState({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
+  
+  // 1. Add state to hold the randomly selected name for this popup instance
+  const [princeName, setPrinceName] = useState(nigerianNames[0]);
 
-  // Calculate a random position on the screen when the component first loads
+  // Calculate a random position and name when the component first loads
   useEffect(() => {
-    // Get a random position, ensuring the popup stays mostly on screen
-    const randomTop = Math.floor(Math.random() * 60); // 0% to 60% from the top
-    const randomLeft = Math.floor(Math.random() * 60); // 0% to 60% from the left
+    // Get a random position
+    const randomTop = Math.floor(Math.random() * 60);
+    const randomLeft = Math.floor(Math.random() * 60);
 
     setPosition({ 
       top: `${randomTop}vh`, 
       left: `${randomLeft}vw`,
-      transform: 'none' // No longer need to center it
+      transform: 'none'
     });
+
+    // 2. Select a random name from the array and set it in the state
+    const randomName = nigerianNames[Math.floor(Math.random() * nigerianNames.length)];
+    setPrinceName(randomName);
+
   }, []); // Empty array ensures this runs only once on mount
 
   return (
@@ -34,7 +53,6 @@ const NigerianPrincePopup: React.FC<NigerianPrincePopupProps> = ({ onClose }) =>
         {/* Title Bar */}
         <div className="bg-gradient-to-r from-[#000080] to-[#1084d0] text-white px-2 py-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {/* Generic email icon */}
             <img src="https://placehold.co/16x16/FFFFFF/000000?text=!" alt="Urgent Icon" className="w-4 h-4" />
             <span className="text-sm font-bold">URGENT & CONFIDENTIAL</span>
           </div>
@@ -50,7 +68,6 @@ const NigerianPrincePopup: React.FC<NigerianPrincePopupProps> = ({ onClose }) =>
         <div className="p-2 flex gap-3">
           {/* Image Area */}
           <div>
-            {/* A generic warning/money icon */}
             <img 
               src="https://placehold.co/128x128/FFFF00/000000?text=%24" 
               alt="A money symbol"
@@ -65,7 +82,8 @@ const NigerianPrincePopup: React.FC<NigerianPrincePopupProps> = ({ onClose }) =>
             <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-2 flex-grow text-black text-sm">
               <p className="font-bold">Greetings Friend,</p>
               <p className="mt-2">
-                I am Prince Adekunle of Nigeria. I have an urgent and confidential business proposition to transfer the sum of $47,500,000 USD. For your help, you will receive 20% of the sum. Please reply with your bank details to proceed.
+                {/* 3. Use the random name from the state in the text */}
+                I am Prince {princeName} of Nigeria. I have an urgent and confidential business proposition to transfer the sum of $47,500,000 USD. For your help, you will receive 20% of the sum. Please reply with your bank details to proceed.
               </p>
             </div>
             

@@ -67,14 +67,11 @@ function PokemonCoopGame() {
   const [audioPlaying, setAudioPlaying] = useState(false)
   const [audioEnabled, setAudioEnabled] = useState(true)
   const audioRef = useRef<HTMLAudioElement>(null)
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const filterRef = useRef<BiquadFilterNode | null>(null);
-  const bitCrusherRef = useRef<AudioWorkletNode | null>(null);
   const guessCountRef = useRef(0);
   const gameLogRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const [audioDuration, setAudioDuration] = useState(0);
 
   const { showAdPopup } = useAdManager();
   const clickAudioRef = useRef<HTMLAudioElement>(null);
@@ -193,6 +190,47 @@ function PokemonCoopGame() {
   }, [guesses.length, gameState, currentPokemon]);
 
   useEffect(() => {
+    const audio = audioRef.current;
+    const handlePlay = () => setAudioPlaying(true);
+    const handlePause = () => setAudioPlaying(false);
+    const handleLoadedMetadata = () => {
+      if (audio) {
+        console.log("Audio loaded, duration:", audio.duration);
+        setAudioDuration(audio.duration);
+      }
+    };
+    const handleCanPlayThrough = () => {
+      if (audio && audio.duration) {
+        console.log("Audio can play through, duration:", audio.duration);
+        setAudioDuration(audio.duration);
+      }
+    };
+
+    if (audio) {
+      audio.addEventListener('play', handlePlay);
+      audio.addEventListener('pause', handlePause);
+      audio.addEventListener('ended', handlePause);
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.addEventListener('canplaythrough', handleCanPlayThrough);
+      
+      // Force load if src is already set
+      if (audio.src && audio.readyState >= 1) {
+        handleLoadedMetadata();
+      }
+    }
+
+    return () => {
+      if (audio) {
+        audio.removeEventListener('play', handlePlay);
+        audio.removeEventListener('pause', handlePause);
+        audio.removeEventListener('ended', handlePause);
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.removeEventListener('canplaythrough', handleCanPlayThrough);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     // Update the ref whenever guessCount changes
     guessCountRef.current = guessCount;
 
@@ -202,42 +240,22 @@ function PokemonCoopGame() {
       if (audioRef.current.src !== newSrc) {
         audioRef.current.src = currentPokemon.audio;
         audioRef.current.load(); // Reload the audio element to apply the new source
+        
+        // Wait for metadata to load and set duration
+        const handleLoadedData = () => {
+          if (audioRef.current && audioRef.current.duration) {
+            console.log("New audio loaded, duration:", audioRef.current.duration);
+            setAudioDuration(audioRef.current.duration);
+          }
+          audioRef.current?.removeEventListener('loadeddata', handleLoadedData);
+        };
+        audioRef.current.addEventListener('loadeddata', handleLoadedData);
       }
 
-      // Update volume and other audio parameters
+      // Update volume
       audioRef.current.volume = audioEnabled ? getAudioQuality().volume : 0;
-      const quality = getAudioQuality();
-      if (filterRef.current) {
-        filterRef.current.frequency.value = quality.filterFrequency;
-      }
-      if (bitCrusherRef.current) {
-        const bitDepthParam = bitCrusherRef.current.parameters.get('bitDepth');
-        const sampleRateReductionParam = bitCrusherRef.current.parameters.get('sampleRateReduction');
-        if (bitDepthParam) bitDepthParam.value = quality.bitDepth;
-        if (sampleRateReductionParam) sampleRateReductionParam.value = quality.sampleRateReduction;
-      }
     }
   }, [currentPokemon, guessCount, audioEnabled]);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    const handlePlay = () => setAudioPlaying(true);
-    const handlePause = () => setAudioPlaying(false);
-
-    if (audio) {
-      audio.addEventListener('play', handlePlay);
-      audio.addEventListener('pause', handlePause);
-      audio.addEventListener('ended', handlePause);
-    }
-
-    return () => {
-      if (audio) {
-        audio.removeEventListener('play', handlePlay);
-        audio.removeEventListener('pause', handlePause);
-        audio.removeEventListener('ended', handlePause);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     // Global click handler for all clicks
@@ -271,19 +289,18 @@ function PokemonCoopGame() {
 
     console.log("Selected subject data:")
 
-    // Disconnect nodes but don't close context
-    if (sourceRef.current) {
-      sourceRef.current.disconnect();
-    }
-    filterRef.current = null;
-    bitCrusherRef.current = null;
-
-    //Simple random algorithm for choosing which 'subject' to choose. Should be kept random but could utilize elo system to make popular ones pop up first 
     setCurrentPokemon(randomPokemon)
     setGameState("playing")
     setGuesses([])
     setGuessCount(0)
     setCurrentGuess("")
+    setAudioDuration(0)
+    
+    // Preload the audio for the selected pokemon
+    if (audioRef.current) {
+      audioRef.current.src = randomPokemon.audio;
+      audioRef.current.load();
+    }
   }
 
   const makeGuess = () => {
@@ -322,34 +339,42 @@ function PokemonCoopGame() {
     guessCountRef.current = 0;
     setCurrentGuess("")
     setAudioPlaying(false)
-
-    // Disconnect nodes but don't close context
-    if (sourceRef.current) {
-      sourceRef.current.disconnect();
-    }
-    filterRef.current = null;
-    bitCrusherRef.current = null;
+    setAudioDuration(0)
   }
 
   const playAgain = () => {
     playClickSound();
     const randomPokemon = pokemonData[Math.floor(Math.random() * pokemonData.length)]
 
-    // Disconnect nodes but don't close context
-    if (sourceRef.current) {
-      sourceRef.current.disconnect();
-    }
-    filterRef.current = null;
-    bitCrusherRef.current = null;
-
-    // Start new game directly
+    // Reset audio state first
+    setAudioPlaying(false)
+    setAudioDuration(0)
+    
+    // Reset game state
     setCurrentPokemon(randomPokemon)
     setGameState("playing")
     setGuesses([])
     setGuessCount(0)
     guessCountRef.current = 0;
     setCurrentGuess("")
-    setAudioPlaying(false)
+    
+    // Preload the audio for the selected pokemon after state reset
+    setTimeout(() => {
+      if (audioRef.current) {
+        audioRef.current.src = randomPokemon.audio;
+        audioRef.current.load();
+        
+        // Add event listener for when new audio loads
+        const handleNewAudioLoad = () => {
+          if (audioRef.current && audioRef.current.duration) {
+            console.log("Play again - new audio loaded, duration:", audioRef.current.duration);
+            setAudioDuration(audioRef.current.duration);
+          }
+          audioRef.current?.removeEventListener('loadedmetadata', handleNewAudioLoad);
+        };
+        audioRef.current.addEventListener('loadedmetadata', handleNewAudioLoad);
+      }
+    }, 0);
   }
 
   const getCurrentImageQuality = () => {
@@ -378,17 +403,21 @@ function PokemonCoopGame() {
   };
 
   const getAudioQuality = () => {
-    // Apply crush multiplier from current pokemon data
-    const crushMultiplier = currentPokemon.crushMultiplier || 1.0;
     const volumeMultiplier = currentPokemon.volumeMultiplier || 1.0;
-
-    // Slower improvement progression to make rounds more challenging
-    const volume = Math.min(1, 0.18 + guessCount * 0.07 * volumeMultiplier) // Slower volume increase
-    const clarity = guessCount + 1
-    const filterFrequency = Math.min(22050, 1200 + guessCount * 2200); // Smaller frequency jumps
-    const bitDepth = Math.min(16, (3.5 + guessCount * 1.8) / crushMultiplier); // Apply multiplier to bit depth
-    const sampleRateReduction = Math.max(1, (11 - guessCount * 1.4) * crushMultiplier); // Apply multiplier to sample reduction
-    return { volume, clarity, filterFrequency, bitDepth, sampleRateReduction }
+    const volume = Math.min(1, 0.8 * volumeMultiplier); // Set to 80% volume always
+    
+    // Calculate how much of the audio to play based on attempt number (divide into 5 segments)
+    const maxDuration = audioDuration || 30; // Fallback to 30 seconds if duration not available
+    const segmentDuration = maxDuration / 5; // Divide into 5 segments
+    const calculatedDuration = segmentDuration * (guessCount + 1);
+    
+    // For very short audio files, ensure minimum playback time
+    const minPlaybackTime = Math.min(0.5, maxDuration); // At least 1 second or full duration if shorter
+    const allowedDuration = Math.max(minPlaybackTime, Math.min(maxDuration, calculatedDuration));
+    
+    console.log(`Audio Quality Debug - guessCount: ${guessCount}, maxDuration: ${maxDuration}, segmentDuration: ${segmentDuration}, calculatedDuration: ${calculatedDuration}, allowedDuration: ${allowedDuration}`);
+    
+    return { volume, allowedDuration }
   }
 
   const toggleMute = () => {
@@ -403,69 +432,62 @@ function PokemonCoopGame() {
 
   const playAudio = async () => {
     playClickSound();
-    let audioContext = audioContextRef.current;
-
-    // Initialize AudioContext and source node once
-    if (!audioContext) {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioContextRef.current = audioContext;
-      sourceRef.current = audioContext.createMediaElementSource(audioRef.current!);
-      await audioContext.audioWorklet.addModule('/bit-crusher-processor.js');
-    }
-
-    // Recreate and connect nodes if they don't exist for the current playback
-    if (!bitCrusherRef.current) {
-      const quality = getAudioQuality();
-
-      // Create low-pass filter
-      const filter = audioContext.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = quality.filterFrequency;
-      filterRef.current = filter;
-
-      // Create AudioWorkletNode
-      const bitCrusher = new AudioWorkletNode(audioContext, 'bit-crusher-processor');
-      const bitDepthParam = bitCrusher.parameters.get('bitDepth');
-      const sampleRateReductionParam = bitCrusher.parameters.get('sampleRateReduction');
-      if (bitDepthParam) bitDepthParam.value = quality.bitDepth;
-      if (sampleRateReductionParam) sampleRateReductionParam.value = quality.sampleRateReduction;
-      bitCrusherRef.current = bitCrusher;
-
-      // Connect the audio chain
-      sourceRef.current!.connect(filter);
-      filter.connect(bitCrusher);
-      bitCrusher.connect(audioContext.destination);
-    }
-
-    // Update parameters for current playback
-    const quality = getAudioQuality();
-    if (filterRef.current) {
-      filterRef.current.frequency.value = quality.filterFrequency;
-    }
-    if (bitCrusherRef.current) {
-      const bitDepthParam = bitCrusherRef.current.parameters.get('bitDepth');
-      const sampleRateReductionParam = bitCrusherRef.current.parameters.get('sampleRateReduction');
-      if (bitDepthParam) bitDepthParam.value = quality.bitDepth;
-      if (sampleRateReductionParam) sampleRateReductionParam.value = quality.sampleRateReduction;
-    }
-
+    
     if (audioRef.current) {
-      // Resume audio context if it's suspended (required by browsers)
-      if (audioContext.state === 'suspended') {
-        await audioContext.resume();
+      // Ensure audio is loaded before trying to play
+      if (audioRef.current.readyState < 2) {
+        console.log("Audio not ready, waiting for load...");
+        // Audio not ready, wait for it to load
+        const waitForLoad = () => {
+          return new Promise<void>((resolve) => {
+            const checkReady = () => {
+              if (audioRef.current && audioRef.current.readyState >= 2) {
+                if (audioRef.current.duration && audioDuration === 0) {
+                  console.log("Setting audio duration from playAudio:", audioRef.current.duration);
+                  setAudioDuration(audioRef.current.duration);
+                }
+                resolve();
+              } else {
+                setTimeout(checkReady, 100);
+              }
+            };
+            checkReady();
+          });
+        };
+        
+        await waitForLoad();
       }
 
+      const quality = getAudioQuality();
+      console.log("Playing audio with quality:", quality);
+      audioRef.current.volume = audioEnabled ? quality.volume : 0;
+
       if (audioRef.current.paused) {
+        // Set up event listener to stop audio at the allowed duration
+        const handleTimeUpdate = () => {
+          if (audioRef.current && audioRef.current.currentTime >= quality.allowedDuration) {
+            console.log(`Stopping audio at ${audioRef.current.currentTime}s (limit: ${quality.allowedDuration}s)`);
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0; // Reset to beginning
+            audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
+          }
+        };
+
+        audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
+        audioRef.current.currentTime = 0; // Always start from beginning
+
         try {
+          console.log("Starting audio playback...");
           await audioRef.current.play();
         } catch (error) {
-          // Ignore AbortError which is expected on rapid play/pause clicks
           if (error instanceof Error && error.name !== 'AbortError') {
             console.error("Audio playback failed:", error);
           }
         }
       } else {
+        console.log("Pausing audio");
         audioRef.current.pause();
+        audioRef.current.currentTime = 0; // Reset to beginning when paused
       }
     }
   }
@@ -755,13 +777,13 @@ function PokemonCoopGame() {
                       {audioPlaying ? (
                         <div className="animate-pulse">
                           <br />
-                          <span className="text-xs">(Bit Depth: {getAudioQuality().bitDepth.toFixed(1)}-bit | Crush: {getAudioQuality().sampleRateReduction.toFixed(1)}x)</span>
+                          <span className="text-xs">(Playing: {getAudioQuality().allowedDuration.toFixed(1)}s of {audioDuration > 0 ? audioDuration.toFixed(1) : "?.?"}s)</span>
                         </div>
                       ) : (
                         <div>Click play to hear audio hint</div>
                       )}
                     </div>
-                    <div className="text-green-400 text-xs">Bit Crusher: {getAudioQuality().bitDepth.toFixed(1)}-bit | Sample Reduction: {getAudioQuality().sampleRateReduction.toFixed(1)}x</div>
+                    <div className="text-green-400 text-xs">Volume: {Math.round(getAudioQuality().volume * 100)}% | Duration: {getAudioQuality().allowedDuration.toFixed(1)}s / {audioDuration > 0 ? audioDuration.toFixed(1) : "?.?"}s</div>
                   </div>
                 </div>
               </div>

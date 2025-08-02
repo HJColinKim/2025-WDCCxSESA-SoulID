@@ -307,7 +307,7 @@ export default function PokemonCoopGame() {
                   <div>Memory: 640KB Available</div>
                   <div>Sound: SoundBlaster 16 Compatible</div>
                   <div>Graphics: SVGA Required</div>
-                  <div>Pokémon Database: {pokemonData.length} entries loaded</div>
+                  <div>Nostalgia Database: {pokemonData.length} entries loaded</div>
                 </div>
               </div>
             </div>

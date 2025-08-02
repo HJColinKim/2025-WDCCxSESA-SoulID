@@ -66,6 +66,10 @@ function PokemonCoopGame() {
   const [showWinRARPopup, setShowWinRARPopup] = useState(false)
   const [audioPlaying, setAudioPlaying] = useState(false)
   const [audioEnabled, setAudioEnabled] = useState(true)
+  // Add chat-related state
+  const [showChatPopup, setShowChatPopup] = useState(false)
+  const [chatMessages, setChatMessages] = useState<Array<{ text: string, sender: 'user' | 'character' }>>([])
+  const [chatInput, setChatInput] = useState("")
   const audioRef = useRef<HTMLAudioElement>(null)
   const guessCountRef = useRef(0);
   const gameLogRef = useRef<HTMLDivElement>(null);
@@ -212,7 +216,7 @@ function PokemonCoopGame() {
       audio.addEventListener('ended', handlePause);
       audio.addEventListener('loadedmetadata', handleLoadedMetadata);
       audio.addEventListener('canplaythrough', handleCanPlayThrough);
-      
+
       // Force load if src is already set
       if (audio.src && audio.readyState >= 1) {
         handleLoadedMetadata();
@@ -240,7 +244,7 @@ function PokemonCoopGame() {
       if (audioRef.current.src !== newSrc) {
         audioRef.current.src = currentPokemon.audio;
         audioRef.current.load(); // Reload the audio element to apply the new source
-        
+
         // Wait for metadata to load and set duration
         const handleLoadedData = () => {
           if (audioRef.current && audioRef.current.duration) {
@@ -295,7 +299,7 @@ function PokemonCoopGame() {
     setGuessCount(0)
     setCurrentGuess("")
     setAudioDuration(0)
-    
+
     // Preload the audio for the selected pokemon
     if (audioRef.current) {
       audioRef.current.src = randomPokemon.audio;
@@ -349,7 +353,11 @@ function PokemonCoopGame() {
     // Reset audio state first
     setAudioPlaying(false)
     setAudioDuration(0)
-    
+    // Reset chat state
+    setShowChatPopup(false)
+    setChatMessages([])
+    setChatInput("")
+
     // Reset game state
     setCurrentPokemon(randomPokemon)
     setGameState("playing")
@@ -357,13 +365,13 @@ function PokemonCoopGame() {
     setGuessCount(0)
     guessCountRef.current = 0;
     setCurrentGuess("")
-    
+
     // Preload the audio for the selected pokemon after state reset
     setTimeout(() => {
       if (audioRef.current) {
         audioRef.current.src = randomPokemon.audio;
         audioRef.current.load();
-        
+
         // Add event listener for when new audio loads
         const handleNewAudioLoad = () => {
           if (audioRef.current && audioRef.current.duration) {
@@ -405,18 +413,18 @@ function PokemonCoopGame() {
   const getAudioQuality = () => {
     const volumeMultiplier = currentPokemon.volumeMultiplier || 1.0;
     const volume = Math.min(1, 0.8 * volumeMultiplier); // Set to 80% volume always
-    
+
     // Calculate how much of the audio to play based on attempt number (divide into 5 segments)
     const maxDuration = audioDuration || 30; // Fallback to 30 seconds if duration not available
     const segmentDuration = maxDuration / 5; // Divide into 5 segments
     const calculatedDuration = segmentDuration * (guessCount + 1);
-    
+
     // For very short audio files, ensure minimum playback time
     const minPlaybackTime = Math.min(0.5, maxDuration); // At least 1 second or full duration if shorter
     const allowedDuration = Math.max(minPlaybackTime, Math.min(maxDuration, calculatedDuration));
-    
+
     console.log(`Audio Quality Debug - guessCount: ${guessCount}, maxDuration: ${maxDuration}, segmentDuration: ${segmentDuration}, calculatedDuration: ${calculatedDuration}, allowedDuration: ${allowedDuration}`);
-    
+
     return { volume, allowedDuration }
   }
 
@@ -432,7 +440,7 @@ function PokemonCoopGame() {
 
   const playAudio = async () => {
     playClickSound();
-    
+
     if (audioRef.current) {
       // Ensure audio is loaded before trying to play
       if (audioRef.current.readyState < 2) {
@@ -454,7 +462,7 @@ function PokemonCoopGame() {
             checkReady();
           });
         };
-        
+
         await waitForLoad();
       }
 
@@ -490,6 +498,95 @@ function PokemonCoopGame() {
         audioRef.current.currentTime = 0; // Reset to beginning when paused
       }
     }
+  }
+
+  // Add character responses
+  const getCharacterResponses = (characterName: string) => {
+    const responses: { [key: string]: string[] } = {
+      "mortal kombat": [
+        "GET OVER HERE!",
+        "Finish him!",
+        "Fatality!",
+        "Welcome to the tournament, warrior.",
+        "Your soul is mine!",
+        "Test your might!"
+      ],
+      "pacman": [
+        "Waka waka waka!",
+        "Those ghosts never give up!",
+        "Power pellets are my favorite snack!",
+        "I've been eating dots since 1980!",
+        "Blinky, Pinky, Inky, and Sue are such troublemakers!",
+        "Want to help me clear the maze?"
+      ],
+      "crash bandicoot": [
+        "Woah!",
+        "Somebody say fruit?",
+        "Spin to win, baby!",
+        "Dr. Cortex is up to no good again!",
+        "Aku Aku protects me on my adventures!",
+        "Time to crash the party!"
+      ],
+      "mario": [
+        "It's-a me, Mario!",
+        "Let's-a go!",
+        "Mamma mia!",
+        "Princess Peach is in another castle!",
+        "Yahoo! Here we go!",
+        "Thank you so much for playing my game!"
+      ],
+      "sonic": [
+        "Gotta go fast!",
+        "You're too slow!",
+        "Juice and jam time!",
+        "Way past cool!",
+        "I'm the fastest thing alive!",
+        "Time to juice and jam!"
+      ],
+      "wii sports": [
+        "Nice swing!",
+        "Strike!",
+        "Home run!",
+        "Let's play some sports!",
+        "Motion controls are the future!",
+        "Want to bowl a perfect game?"
+      ]
+    }
+    return responses[characterName.toLowerCase()] || ["Hello there!", "Nice to meet you!", "Thanks for playing!"]
+  }
+
+  const handleChatSubmit = () => {
+    if (!chatInput.trim()) return
+
+    playClickSound()
+    const newMessages = [...chatMessages, { text: chatInput, sender: 'user' as const }]
+
+    // Get a random response from the character
+    const characterResponses = getCharacterResponses(currentPokemon.name)
+    const randomResponse = characterResponses[Math.floor(Math.random() * characterResponses.length)]
+
+    // Add character response after a short delay
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, { text: randomResponse, sender: 'character' as const }])
+    }, 1000)
+
+    setChatMessages(newMessages)
+    setChatInput("")
+  }
+
+  const openChat = () => {
+    playClickSound()
+    setShowChatPopup(true)
+    // Add initial greeting
+    const characterResponses = getCharacterResponses(currentPokemon.name)
+    const greeting = characterResponses[0]
+    setChatMessages([{ text: greeting, sender: 'character' }])
+  }
+
+  const closeChat = () => {
+    playClickSound()
+    setShowChatPopup(false)
+    setChatMessages([])
   }
 
   if (gameState === "menu") {
@@ -851,12 +948,20 @@ function PokemonCoopGame() {
                         Better luck next time!
                       </div>
                     )}
-                    <button
-                      onClick={playAgain}
-                      className="mt-4 bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-6 py-2 hover:bg-[#d0d0d0] font-bold"
-                    >
-                      PLAY AGAIN
-                    </button>
+                    <div className="mt-4 space-y-2">
+                      <button
+                        onClick={playAgain}
+                        className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-6 py-2 hover:bg-[#d0d0d0] font-bold mr-2"
+                      >
+                        PLAY AGAIN
+                      </button>
+                      <button
+                        onClick={openChat}
+                        className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-6 py-2 hover:bg-[#d0d0d0] font-bold"
+                      >
+                        💬 CHAT WITH {currentPokemon.name.toUpperCase()}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -920,31 +1025,97 @@ function PokemonCoopGame() {
             </div>
 
 
-                  {/* NEW WINDOWS 95 AD GOES HERE */}
-<div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-3">
-  <div className="bg-gradient-to-r from-[#008080] to-[#004040] text-white px-2 py-1 mb-2">
-    <span className="text-xs font-bold">💾 UPGRADE NOW!</span>
-  </div>
-  <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-2 flex gap-2 items-center">
-    <img 
-      src="/images/windows95.jpg" 
-      alt="Windows 95 Box Art"
-      className="w-20 h-20"
-      onError={(e) => { e.currentTarget.src = 'https://placehold.co/80x80/000000/FFFFFF?text=Win95'; }}
-    />
-    <div className="text-xs text-black text-left flex-1">
-      <div className="font-bold">Windows 95</div>
-      <div>Purchase a physical copy of the brand new Windows 95, and experience the future!</div>
-      <div className="font-bold mt-1">Only $89.99!</div>
-      <button className="bg-blue-600 text-white px-2 py-1 text-xs mt-2 border border-black hover:bg-blue-700">
-        ORDER NOW
-      </button>
-    </div>
-  </div>
-</div>
+            {/* NEW WINDOWS 95 AD GOES HERE */}
+            <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-3">
+              <div className="bg-gradient-to-r from-[#008080] to-[#004040] text-white px-2 py-1 mb-2">
+                <span className="text-xs font-bold">💾 UPGRADE NOW!</span>
+              </div>
+              <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-2 flex gap-2 items-center">
+                <img
+                  src="/images/windows95.jpg"
+                  alt="Windows 95 Box Art"
+                  className="w-20 h-20"
+                  onError={(e) => { e.currentTarget.src = 'https://placehold.co/80x80/000000/FFFFFF?text=Win95'; }}
+                />
+                <div className="text-xs text-black text-left flex-1">
+                  <div className="font-bold">Windows 95</div>
+                  <div>Purchase a physical copy of the brand new Windows 95, and experience the future!</div>
+                  <div className="font-bold mt-1">Only $89.99!</div>
+                  <button className="bg-blue-600 text-white px-2 py-1 text-xs mt-2 border border-black hover:bg-blue-700">
+                    ORDER NOW
+                  </button>
+                </div>
+              </div>
+            </div>
 
           </div>
         </div>
+        {/* Chat Popup */}
+        {showChatPopup && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+            <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-96 h-96 pointer-events-auto">
+              <div className="bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between">
+                <span className="text-sm font-bold">💬 Chat with {currentPokemon.name}</span>
+                <button
+                  onClick={closeChat}
+                  className="w-4 h-4 bg-[#c0c0c0] border border-black text-black text-xs flex items-center justify-center hover:bg-[#d0d0d0]"
+                >
+                  <X className="w-2 h-2" />
+                </button>
+              </div>
+
+              <div className="p-4 h-full flex flex-col">
+                {/* Character Avatar */}
+                <div className="flex items-center gap-3 mb-4 bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-2">
+                  <img
+                    src={currentPokemon.image}
+                    alt={currentPokemon.name}
+                    className="w-12 h-12 object-cover border border-black"
+                  />
+                  <div>
+                    <div className="font-bold text-sm">{currentPokemon.name.toUpperCase()}</div>
+                    <div className="text-xs text-gray-600">Status: Online</div>
+                  </div>
+                </div>
+
+                {/* Chat Messages */}
+                <div className="flex-1 bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-3 overflow-y-auto mb-4">
+                  <div className="text-green-400 font-mono text-xs space-y-2">
+                    <div className="text-cyan-400">*** CHAT SESSION INITIATED ***</div>
+                    {chatMessages.map((message, index) => (
+                      <div key={index} className={message.sender === 'user' ? 'text-yellow-400' : 'text-green-400'}>
+                        <span className="text-white">
+                          {message.sender === 'user' ? 'YOU' : currentPokemon.name.toUpperCase()}:
+                        </span>{' '}
+                        {message.text}
+                      </div>
+                    ))}
+                    <div className="text-cyan-400 animate-pulse">&gt; Type your message...</div>
+                  </div>
+                </div>
+
+                {/* Chat Input */}
+                <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleChatSubmit()}
+                      placeholder="Type your message..."
+                      className="flex-1 border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white font-mono text-xs"
+                    />
+                    <button
+                      onClick={handleChatSubmit}
+                      className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-xs hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white font-bold"
+                    >
+                      SEND
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

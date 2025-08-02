@@ -197,7 +197,7 @@ function PokemonCoopGame() {
   useEffect(() => {
     const adTimer = setInterval(() => {
       // You can call this from anywhere now!
-      //showAdPopup();   //Disable this line for accessibility mode 
+      showAdPopup();   //Disable this line for accessibility mode 
       //playErrorSound(); // Play error sound when a popup is shown
     }, 1000); // Trigger a random ad every 15 seconds
 
@@ -576,7 +576,7 @@ function PokemonCoopGame() {
 
       {/* Settings Dialog */}
       {showSettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
           <div className="bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 w-96 shadow-lg">
             {/* Title Bar */}
             <div className="bg-gradient-to-r from-blue-800 to-blue-600 text-white px-2 py-1 flex items-center justify-between">
@@ -585,10 +585,14 @@ function PokemonCoopGame() {
                 <span className="text-sm font-bold">Settings</span>
               </div>
               <div className="flex gap-1">
-                <button className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200">
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200"
+                >
                   <Minus size={8} />
                 </button>
                 <button
+                  onClick={() => setShowSettings(false)}
                   className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200"
                 >
                   <X size={8} />
@@ -603,10 +607,8 @@ function PokemonCoopGame() {
                 <div className="border border-gray-600 border-t-gray-600 border-l-gray-600 border-r-white border-b-white p-3 bg-white">
                   <p className="text-xs mb-3">Choose your preferred display mode:</p>
 
-                  {/* Theme Toggle Button */}
-                  <button
-                    className="w-full h-8 px-3 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold"
-                  >
+                  {/* This button does NOT close the popup */}
+                  <button className="w-full h-8 px-3 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold">
                     {"Switch to Dark Mode"}
                   </button>
                 </div>
@@ -615,11 +617,13 @@ function PokemonCoopGame() {
               {/* Dialog Buttons */}
               <div className="flex justify-end gap-2">
                 <button
+                  onClick={() => setShowSettings(false)}
                   className="px-4 py-1 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold"
                 >
                   OK
                 </button>
                 <button
+                  onClick={() => setShowSettings(false)}
                   className="px-4 py-1 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold"
                 >
                   Cancel

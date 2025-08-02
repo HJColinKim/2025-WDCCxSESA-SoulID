@@ -8,56 +8,38 @@ import { Volume2, VolumeX, Minimize2, X, Square, Play, Pause } from "lucide-reac
 const pokemonData = [
   {
     id: 25,
-    name: "scorpion",
+    name: "Mortal Kombat",
     image: "/images/MK1SubScorp.jpg",
-    cry: "Pika pika chu!",
-    generation: 1,
-    type: "Electric",
     audio: "/audio/MkAudio.mp3",
   },
   {
     id: 6,
     name: "pacman",
     image: "/images/pacman.png",
-    cry: "Char char izard!",
-    generation: 1,
-    type: "Fire/Flying",
     audio: "/audio/PacMan.mp3",
   },
   {
     id: 9,
     name: "Blastoise",
     image: "/images/le.jpeg",
-    cry: "Blas blas toise!",
-    generation: 1,
-    type: "Water",
     audio: "/audio/example.mp3",
   },
   {
     id: 3,
     name: "Venusaur",
     image: "/images/le.jpeg",
-    cry: "Venus venus aur!",
-    generation: 1,
-    type: "Grass/Poison",
     audio: "/audio/example.mp3",
   },
   {
     id: 150,
     name: "Mewtwo",
     image: "/images/le.jpeg",
-    cry: "Mew mew two!",
-    generation: 1,
-    type: "Psychic",
     audio: "/audio/example.mp3",
   },
   {
     id: 144,
     name: "Articuno",
     image: "/images/le.jpeg",
-    cry: "Arti arti cuno!",
-    generation: 1,
-    type: "Ice/Flying",
     audio: "/audio/example.mp3",
   },
 ]
@@ -78,6 +60,7 @@ export default function PokemonCoopGame() {
   const filterRef = useRef<BiquadFilterNode | null>(null);
   const bitCrusherRef = useRef<ScriptProcessorNode | null>(null);
   const guessCountRef = useRef(0);
+  const gameLogRef = useRef<HTMLDivElement>(null);
 
   const maxGuesses = 5
   const qualityLevels = [16, 32, 64, 96, 128]
@@ -163,6 +146,13 @@ export default function PokemonCoopGame() {
     }
 
     setCurrentGuess("")
+
+    // Auto-scroll game log to bottom after state updates
+    setTimeout(() => {
+      if (gameLogRef.current) {
+        gameLogRef.current.scrollTop = gameLogRef.current.scrollHeight;
+      }
+    }, 0);
   }
 
   const resetGame = () => {
@@ -176,7 +166,7 @@ export default function PokemonCoopGame() {
 
   const getCurrentImageQuality = () => {
     // Revert to the original 5-step size progression.
-    const qualityLevels = [16, 32, 64, 96, 128]; 
+    const qualityLevels = [16, 32, 64, 96, 128];
     const level = Math.min(guesses.length, qualityLevels.length - 1);
     return qualityLevels[level];
   };
@@ -187,7 +177,7 @@ export default function PokemonCoopGame() {
 
     // Start with 8px of blur and reduce it by 2px each time.
     const blur = Math.max(0, 8 - guesses.length * 2);
-    
+
     return `blur(${blur}px) contrast(${effectLevel}%) brightness(${effectLevel}%) saturate(${effectLevel}%)`;
   };
 
@@ -523,7 +513,7 @@ export default function PokemonCoopGame() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Image Display */}
                 <div className="bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-4 text-center">
-                  
+
                   <div className="relative inline-block">
                     <img
                       src={currentPokemon.image || "/placeholder.svg"}
@@ -564,7 +554,6 @@ export default function PokemonCoopGame() {
                     <div className="text-green-400 text-sm">
                       {audioPlaying ? (
                         <div className="animate-pulse">
-                          🎵 "{currentPokemon.cry}"
                           <br />
                           <span className="text-xs">(Bit Depth: {getAudioQuality().bitDepth.toFixed(1)}-bit | Crush: {getAudioQuality().sampleRateReduction.toFixed(1)}x)</span>
                         </div>
@@ -659,7 +648,10 @@ export default function PokemonCoopGame() {
               <div className="bg-gradient-to-r from-[#008080] to-[#004040] text-white px-2 py-1 mb-4">
                 <span className="text-sm font-bold">💻 GAME LOG</span>
               </div>
-              <div className="bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-3 h-48 overflow-y-auto">
+              <div
+                ref={gameLogRef}
+                className="bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-3 h-48 overflow-y-auto"
+              >
                 <div className="text-green-400 font-mono text-xs">
                   <div>C:\NOSTALGIA\GUESSER&gt; start_game.exe</div>
                   <div>Loading Nostalgia database...</div>

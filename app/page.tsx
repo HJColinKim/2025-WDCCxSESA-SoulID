@@ -601,9 +601,7 @@ export default function PokemonCoopGame() {
                     {guessCount > 0 && (
                       <div className="text-sm text-gray-600">Last guess: "{guesses[guesses.length - 1]}"</div>
                     )}
-                    <div className="text-xs text-gray-500 mt-2">
-                      Generation: {currentPokemon.generation} | Type: {currentPokemon.type}
-                    </div>
+                    
                   </div>
                 )}
                 {gameState === "finished" && (
@@ -648,9 +646,7 @@ export default function PokemonCoopGame() {
                 <div className="text-green-400 font-mono text-xs">
                   <div>C:\NOSTALGIA\GUESSER&gt; start_game.exe</div>
                   <div>Loading Nostalgia database...</div>
-                  <div>
-                    Selected: #{currentPokemon.id} (Gen {currentPokemon.generation})
-                  </div>
+                  
                   <div>Initializing graphics...</div>
                   <div>Initializing audio...</div>
                   <div>{"=".repeat(30)}</div>

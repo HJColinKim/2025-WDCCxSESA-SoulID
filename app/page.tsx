@@ -9,10 +9,10 @@ import { AdProvider, useAdManager } from "./adsManager"
 const pokemonData = [
   {
     id: 25,
-    name: "mortal kombat",
-    image: "/images/MK1SubScorp.jpg",
-    audio: "/audio/MkAudio.mp3",
-    crushMultiplier: 0.7, // Normal crushing
+    name: "halo",
+    image: "/images/halo.png",
+    audio: "/audio/haloaudio.mp3",
+    crushMultiplier: 1, // Normal crushing
   },
   {
     id: 6,
@@ -72,6 +72,7 @@ function PokemonCoopGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [audioDuration, setAudioDuration] = useState(0);
+  const [isFirstGame, setIsFirstGame] = useState(true);
 
   const { showAdPopup } = useAdManager();
   const clickAudioRef = useRef<HTMLAudioElement>(null);
@@ -246,14 +247,31 @@ function PokemonCoopGame() {
           if (audioRef.current && audioRef.current.duration) {
             console.log("New audio loaded, duration:", audioRef.current.duration);
             setAudioDuration(audioRef.current.duration);
+            // Force volume reset to ensure audio is ready
+            audioRef.current.volume = audioEnabled ? getAudioQuality().volume : 0;
           }
           audioRef.current?.removeEventListener('loadeddata', handleLoadedData);
         };
         audioRef.current.addEventListener('loadeddata', handleLoadedData);
+        
+        // Additional event listener for loadedmetadata
+        const handleLoadedMetadata = () => {
+          if (audioRef.current && audioRef.current.duration) {
+            console.log("Metadata loaded, duration:", audioRef.current.duration);
+            setAudioDuration(audioRef.current.duration);
+            // Force volume reset to ensure audio is ready
+            audioRef.current.volume = audioEnabled ? getAudioQuality().volume : 0;
+          }
+          audioRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        };
+        audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
       }
 
-      // Update volume
-      audioRef.current.volume = audioEnabled ? getAudioQuality().volume : 0;
+      // Update volume - force a volume change to trigger audio initialization
+      const targetVolume = audioEnabled ? getAudioQuality().volume : 0;
+      if (audioRef.current.volume !== targetVolume) {
+        audioRef.current.volume = targetVolume;
+      }
     }
   }, [currentPokemon, guessCount, audioEnabled]);
 
@@ -285,7 +303,17 @@ function PokemonCoopGame() {
 
   const startGame = () => {
     playClickSound();
-    const randomPokemon = pokemonData[Math.floor(Math.random() * pokemonData.length)]
+    let randomPokemon;
+    
+    if (isFirstGame) {
+      // For the first game, exclude halo from the selection
+      const nonHaloPokemon = pokemonData.filter(pokemon => pokemon.name !== "halo");
+      randomPokemon = nonHaloPokemon[Math.floor(Math.random() * nonHaloPokemon.length)];
+      setIsFirstGame(false);
+    } else {
+      // For subsequent games, allow any pokemon including halo
+      randomPokemon = pokemonData[Math.floor(Math.random() * pokemonData.length)];
+    }
 
     console.log("Selected subject data:")
 
@@ -434,6 +462,10 @@ function PokemonCoopGame() {
     playClickSound();
     
     if (audioRef.current) {
+      // Force volume refresh before playing
+      const quality = getAudioQuality();
+      audioRef.current.volume = audioEnabled ? quality.volume : 0;
+      
       // Ensure audio is loaded before trying to play
       if (audioRef.current.readyState < 2) {
         console.log("Audio not ready, waiting for load...");
@@ -446,6 +478,8 @@ function PokemonCoopGame() {
                   console.log("Setting audio duration from playAudio:", audioRef.current.duration);
                   setAudioDuration(audioRef.current.duration);
                 }
+                // Force volume set again after audio is ready
+                audioRef.current.volume = audioEnabled ? getAudioQuality().volume : 0;
                 resolve();
               } else {
                 setTimeout(checkReady, 100);
@@ -458,9 +492,7 @@ function PokemonCoopGame() {
         await waitForLoad();
       }
 
-      const quality = getAudioQuality();
       console.log("Playing audio with quality:", quality);
-      audioRef.current.volume = audioEnabled ? quality.volume : 0;
 
       if (audioRef.current.paused) {
         // Set up event listener to stop audio at the allowed duration

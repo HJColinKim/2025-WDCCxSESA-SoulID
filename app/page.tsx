@@ -16,7 +16,7 @@ const pokemonData = [
   {
     id: 6,
     name: "pacman",
-    image: "/images/pacman.jpeg",
+    image: "/images/pacman.jpg",
     audio: "/audio/PacMan.mp3",
     crushMultiplier: 1.3, // Less crushing (audio plays better on first round)
     volumeMultiplier: 0.1, // Normal volume
@@ -70,7 +70,7 @@ export default function PokemonCoopGame() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const filterRef = useRef<BiquadFilterNode | null>(null);
-  const bitCrusherRef = useRef<ScriptProcessorNode | null>(null);
+  const bitCrusherRef = useRef<AudioWorkletNode | null>(null);
   const guessCountRef = useRef(0);
   const gameLogRef = useRef<HTMLDivElement>(null);
 
@@ -82,17 +82,27 @@ export default function PokemonCoopGame() {
     guessCountRef.current = guessCount;
 
     if (audioRef.current) {
-      audioRef.current.src = currentPokemon.audio;
-      audioRef.current.volume = audioEnabled ? getAudioQuality().volume : 0;
-      if (filterRef.current) {
-        filterRef.current.frequency.value = getAudioQuality().filterFrequency;
+      // Set the src only if it has changed
+      const newSrc = new URL(currentPokemon.audio, window.location.href).href;
+      if (audioRef.current.src !== newSrc) {
+        audioRef.current.src = currentPokemon.audio;
+        audioRef.current.load(); // Reload the audio element to apply the new source
       }
-      // Bit crusher effect is updated in real-time via the onaudioprocess callback
-      if (audioPlaying) {
-        audioRef.current.play();
+
+      // Update volume and other audio parameters
+      audioRef.current.volume = audioEnabled ? getAudioQuality().volume : 0;
+      const quality = getAudioQuality();
+      if (filterRef.current) {
+        filterRef.current.frequency.value = quality.filterFrequency;
+      }
+      if (bitCrusherRef.current) {
+        const bitDepthParam = bitCrusherRef.current.parameters.get('bitDepth');
+        const sampleRateReductionParam = bitCrusherRef.current.parameters.get('sampleRateReduction');
+        if (bitDepthParam) bitDepthParam.value = quality.bitDepth;
+        if (sampleRateReductionParam) sampleRateReductionParam.value = quality.sampleRateReduction;
       }
     }
-  }, [currentPokemon, audioPlaying, guessCount, audioEnabled]);
+  }, [currentPokemon, guessCount, audioEnabled]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -136,12 +146,10 @@ export default function PokemonCoopGame() {
 
     console.log("Selected subject data:")
 
-    // Reset audio context for new game
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
+    // Disconnect nodes but don't close context
+    if (sourceRef.current) {
+      sourceRef.current.disconnect();
     }
-    sourceRef.current = null;
     filterRef.current = null;
     bitCrusherRef.current = null;
 
@@ -184,14 +192,32 @@ export default function PokemonCoopGame() {
     setCurrentGuess("")
     setAudioPlaying(false)
 
-    // Reset audio context and processing nodes
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
+    // Disconnect nodes but don't close context
+    if (sourceRef.current) {
+      sourceRef.current.disconnect();
     }
-    sourceRef.current = null;
     filterRef.current = null;
     bitCrusherRef.current = null;
+  }
+
+  const playAgain = () => {
+    const randomPokemon = pokemonData[Math.floor(Math.random() * pokemonData.length)]
+
+    // Disconnect nodes but don't close context
+    if (sourceRef.current) {
+      sourceRef.current.disconnect();
+    }
+    filterRef.current = null;
+    bitCrusherRef.current = null;
+
+    // Start new game directly
+    setCurrentPokemon(randomPokemon)
+    setGameState("playing")
+    setGuesses([])
+    setGuessCount(0)
+    guessCountRef.current = 0;
+    setCurrentGuess("")
+    setAudioPlaying(false)
   }
 
   const getCurrentImageQuality = () => {
@@ -244,70 +270,68 @@ export default function PokemonCoopGame() {
     }
   }
 
-  const playAudio = () => {
-    if (!audioContextRef.current) {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const playAudio = async () => {
+    let audioContext = audioContextRef.current;
+
+    // Initialize AudioContext and source node once
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       audioContextRef.current = audioContext;
-      const source = audioContext.createMediaElementSource(audioRef.current!);
-      sourceRef.current = source;
+      sourceRef.current = audioContext.createMediaElementSource(audioRef.current!);
+      await audioContext.audioWorklet.addModule('/bit-crusher-processor.js');
+    }
+
+    // Recreate and connect nodes if they don't exist for the current playback
+    if (!bitCrusherRef.current) {
+      const quality = getAudioQuality();
 
       // Create low-pass filter
       const filter = audioContext.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.value = getAudioQuality().filterFrequency;
+      filter.frequency.value = quality.filterFrequency;
       filterRef.current = filter;
 
-      // Create bit crusher for bit depth and sample rate reduction
-      const bitCrusher = audioContext.createScriptProcessor(4096, 1, 1);
+      // Create AudioWorkletNode
+      const bitCrusher = new AudioWorkletNode(audioContext, 'bit-crusher-processor');
+      const bitDepthParam = bitCrusher.parameters.get('bitDepth');
+      const sampleRateReductionParam = bitCrusher.parameters.get('sampleRateReduction');
+      if (bitDepthParam) bitDepthParam.value = quality.bitDepth;
+      if (sampleRateReductionParam) sampleRateReductionParam.value = quality.sampleRateReduction;
       bitCrusherRef.current = bitCrusher;
 
-      let sampleCounter = 0;
-      let lastCrushedSample = 0;
-
-      bitCrusher.onaudioprocess = (event) => {
-        const input = event.inputBuffer.getChannelData(0);
-        const output = event.outputBuffer.getChannelData(0);
-
-        // Get current quality settings using the ref for stable values and apply crush multiplier
-        const crushMultiplier = currentPokemon.crushMultiplier || 1.0;
-        const currentBitDepth = Math.min(16, (3.5 + guessCountRef.current * 1.8) / crushMultiplier);
-        const currentSampleReduction = Math.max(1, (11 - guessCountRef.current * 1.4) * crushMultiplier);
-
-        const levels = Math.pow(2, currentBitDepth);
-
-        for (let i = 0; i < input.length; i++) {
-          // Sample rate reduction: only update the output every N samples
-          if (sampleCounter % Math.floor(currentSampleReduction) === 0) {
-            // Bit depth reduction: quantize the audio to simulate lower bit depth
-            const quantized = Math.round(input[i] * levels) / levels;
-            // Lighter overdrive for less harsh distortion
-            lastCrushedSample = Math.tanh(quantized * 1.2);
-          }
-
-          output[i] = lastCrushedSample;
-          sampleCounter++;
-        }
-      };
-
-      // Connect the audio chain: source -> filter -> bitCrusher -> destination
-      source.connect(filter);
+      // Connect the audio chain
+      sourceRef.current!.connect(filter);
       filter.connect(bitCrusher);
       bitCrusher.connect(audioContext.destination);
     }
 
-    // Update filter frequency and bit depth when playing
+    // Update parameters for current playback
+    const quality = getAudioQuality();
     if (filterRef.current) {
-      filterRef.current.frequency.value = getAudioQuality().filterFrequency;
+      filterRef.current.frequency.value = quality.filterFrequency;
+    }
+    if (bitCrusherRef.current) {
+      const bitDepthParam = bitCrusherRef.current.parameters.get('bitDepth');
+      const sampleRateReductionParam = bitCrusherRef.current.parameters.get('sampleRateReduction');
+      if (bitDepthParam) bitDepthParam.value = quality.bitDepth;
+      if (sampleRateReductionParam) sampleRateReductionParam.value = quality.sampleRateReduction;
     }
 
     if (audioRef.current) {
       // Resume audio context if it's suspended (required by browsers)
-      if (audioContextRef.current?.state === 'suspended') {
-        audioContextRef.current.resume();
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
       }
 
       if (audioRef.current.paused) {
-        audioRef.current.play();
+        try {
+          await audioRef.current.play();
+        } catch (error) {
+          // Ignore AbortError which is expected on rapid play/pause clicks
+          if (error instanceof Error && error.name !== 'AbortError') {
+            console.error("Audio playback failed:", error);
+          }
+        }
       } else {
         audioRef.current.pause();
       }
@@ -550,7 +574,7 @@ export default function PokemonCoopGame() {
           {/* Main Game Area */}
           <div className="lg:col-span-3 space-y-4">
             {/* Image and Audio Display */}
-            <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-4">
+            <div className="bg-[#c0c0c0] border-2 border-t-white border-l-[#808080] border-r-[#808080] border-b-[#808080] p-4">
               <div className="bg-gradient-to-r from-[#008080] to-[#004040] text-white px-2 py-1 mb-4">
                 <span className="text-sm font-bold">🎯 MYSTERY NOSTALGIA TOPIC</span>
               </div>
@@ -675,7 +699,7 @@ export default function PokemonCoopGame() {
                       </div>
                     )}
                     <button
-                      onClick={resetGame}
+                      onClick={playAgain}
                       className="mt-4 bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-6 py-2 hover:bg-[#d0d0d0] font-bold"
                     >
                       PLAY AGAIN

@@ -908,34 +908,36 @@ function PokemonCoopGame() {
                 </div>
 
                 {/* Audio Display */}
-                <div className="bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-4 text-center">
-                  <div className="text-green-400 text-xs mb-2">🔊 AUDIO PLAYER</div>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-center gap-4">
-                      <button
-                        onClick={playAudio}
-                        className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-2 hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
-                      >
-                        {audioPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                      </button>
-                      <button
-                        onClick={toggleMute}
-                        className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-2 hover:bg-[#d0d0d0]"
-                      >
-                        {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                      </button>
+                <div className="bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-4 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-green-400 text-xs mb-2">🔊 AUDIO PLAYER</div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-center gap-4">
+                        <button
+                          onClick={playAudio}
+                          className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-2 hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
+                        >
+                          {audioPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={toggleMute}
+                          className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-2 hover:bg-[#d0d0d0]"
+                        >
+                          {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <div className="text-green-400 text-sm">
+                        {audioPlaying ? (
+                          <div className="animate-pulse">
+                            <br />
+                            <span className="text-xs">(Playing: {getAudioQuality().allowedDuration.toFixed(1)}s of {audioDuration > 0 ? audioDuration.toFixed(1) : "?.?"}s)</span>
+                          </div>
+                        ) : (
+                          <div>Click play to hear audio hint</div>
+                        )}
+                      </div>
+                      <div className="text-green-400 text-xs">Volume: {Math.round(getAudioQuality().volume * 100)}% | Duration: {getAudioQuality().allowedDuration.toFixed(1)}s / {audioDuration > 0 ? audioDuration.toFixed(1) : "?.?"}s</div>
                     </div>
-                    <div className="text-green-400 text-sm">
-                      {audioPlaying ? (
-                        <div className="animate-pulse">
-                          <br />
-                          <span className="text-xs">(Playing: {getAudioQuality().allowedDuration.toFixed(1)}s of {audioDuration > 0 ? audioDuration.toFixed(1) : "?.?"}s)</span>
-                        </div>
-                      ) : (
-                        <div>Click play to hear audio hint</div>
-                      )}
-                    </div>
-                    <div className="text-green-400 text-xs">Volume: {Math.round(getAudioQuality().volume * 100)}% | Duration: {getAudioQuality().allowedDuration.toFixed(1)}s / {audioDuration > 0 ? audioDuration.toFixed(1) : "?.?"}s</div>
                   </div>
                 </div>
               </div>

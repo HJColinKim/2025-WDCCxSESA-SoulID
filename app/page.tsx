@@ -175,17 +175,21 @@ export default function PokemonCoopGame() {
   }
 
   const getCurrentImageQuality = () => {
-    const level = Math.min(guessCount, qualityLevels.length - 1)
-    return qualityLevels[level]
-  }
+    // Revert to the original 5-step size progression.
+    const qualityLevels = [16, 32, 64, 96, 128]; 
+    const level = Math.min(guesses.length, qualityLevels.length - 1);
+    return qualityLevels[level];
+  };
 
   const getImageFilter = () => {
-    const pixelSize = Math.max(1, 6 - guessCount)
-    const blur = Math.max(0, 10 - guessCount * 2)
-    const contrast = Math.min(100, 30 + guessCount * 15)
-    const brightness = Math.min(100, 40 + guessCount * 12)
-    return `blur(${blur}px) contrast(${contrast}%) brightness(${brightness}%) saturate(${50 + guessCount * 10}%)`
-  }
+    // Start at 40% quality and increase by 15% each time.
+    const effectLevel = Math.min(100, 40 + guesses.length * 15);
+
+    // Start with 8px of blur and reduce it by 2px each time.
+    const blur = Math.max(0, 8 - guesses.length * 2);
+    
+    return `blur(${blur}px) contrast(${effectLevel}%) brightness(${effectLevel}%) saturate(${effectLevel}%)`;
+  };
 
   const getAudioQuality = () => {
     // Simulate audio quality improvement with bit depth
@@ -519,7 +523,7 @@ export default function PokemonCoopGame() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Image Display */}
                 <div className="bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-4 text-center">
-                  <div className="text-green-400 text-xs mb-2">📺 IMAGE DISPLAY</div>
+                  
                   <div className="relative inline-block">
                     <img
                       src={currentPokemon.image || "/placeholder.svg"}
@@ -536,7 +540,7 @@ export default function PokemonCoopGame() {
                   <div className="text-green-400 text-xs mt-2">
                     Resolution: {getCurrentImageQuality()}x{getCurrentImageQuality()}px
                   </div>
-                  <div className="text-green-400 text-xs">Quality: {Math.round((guessCount + 1) * 20)}%</div>
+                  <div className="text-green-400 text-xs">Quality: {Math.min(100, 20 + guessCount * 20)}%</div>
                 </div>
 
                 {/* Audio Display */}

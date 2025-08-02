@@ -630,15 +630,15 @@ function PokemonCoopGame() {
                       alt="Mystery Pokémon"
                       className="pixelated mx-auto"
                       style={{
-                        width: `${getCurrentImageQuality()}px`,
-                        height: `${getCurrentImageQuality()}px`,
+                        width: `${512}px`,
+                        height: `${512}px`,
                         filter: getImageFilter(),
                         imageRendering: "pixelated",
                       }}
                     />
                   </div>
                   <div className="text-green-400 text-xs mt-2">
-                    Resolution: {getCurrentImageQuality()}x{getCurrentImageQuality()}px
+                    Resolution: {512}x{512}px
                   </div>
                   <div className="text-green-400 text-xs">
                     Quality: {gameState === 'finished' ? 100 : Math.min(100, 40 + guessCount * 15)}%

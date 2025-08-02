@@ -20,7 +20,7 @@ const pokemonData = [
     image: "/images/pacman.jpg",
     audio: "/audio/PacMan.mp3",
     crushMultiplier: 1.3, // Less crushing (audio plays better on first round)
-    volumeMultiplier: 0.1, // Normal volume
+    volumeMultiplier: 1, // Normal volume used to 0.1
   },
   {
     id: 9,
@@ -395,7 +395,7 @@ function PokemonCoopGame() {
         {/* Custom cursor styles */}
         <style jsx global>{`
           .win95-cursor {
-            cursor: crosshair;
+            cursor: default;
           }
           .win95-cursor button:hover {
             cursor: pointer;
@@ -576,7 +576,7 @@ function PokemonCoopGame() {
       {/* Custom cursor styles */}
       <style jsx global>{`
         .win95-cursor {
-          cursor: crosshair;
+          cursor: default;
         }
         .win95-cursor button:hover {
           cursor: pointer;

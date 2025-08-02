@@ -77,14 +77,18 @@ export default function PokemonCoopGame() {
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const filterRef = useRef<BiquadFilterNode | null>(null);
   const bitCrusherRef = useRef<ScriptProcessorNode | null>(null);
+  const guessCountRef = useRef(0);
 
   const maxGuesses = 5
   const qualityLevels = [16, 32, 64, 96, 128]
 
   useEffect(() => {
+    // Update the ref whenever guessCount changes
+    guessCountRef.current = guessCount;
+
     if (audioRef.current) {
       audioRef.current.src = currentPokemon.audio;
-      audioRef.current.volume = getAudioQuality().volume;
+      audioRef.current.volume = audioEnabled ? getAudioQuality().volume : 0;
       if (filterRef.current) {
         filterRef.current.frequency.value = getAudioQuality().filterFrequency;
       }
@@ -93,7 +97,7 @@ export default function PokemonCoopGame() {
         audioRef.current.play();
       }
     }
-  }, [currentPokemon, audioPlaying, guessCount]);
+  }, [currentPokemon, audioPlaying, guessCount, audioEnabled]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -161,6 +165,7 @@ export default function PokemonCoopGame() {
     setGameState("menu")
     setGuesses([])
     setGuessCount(0)
+    guessCountRef.current = 0;
     setCurrentGuess("")
     setAudioPlaying(false)
   }
@@ -188,6 +193,15 @@ export default function PokemonCoopGame() {
     return { volume, clarity, filterFrequency, bitDepth, sampleRate }
   }
 
+  const toggleMute = () => {
+    const newAudioEnabled = !audioEnabled;
+    setAudioEnabled(newAudioEnabled);
+
+    if (audioRef.current) {
+      audioRef.current.volume = newAudioEnabled ? getAudioQuality().volume : 0;
+    }
+  }
+
   const playAudio = () => {
     if (!audioContextRef.current) {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -208,8 +222,9 @@ export default function PokemonCoopGame() {
       bitCrusher.onaudioprocess = (event) => {
         const input = event.inputBuffer.getChannelData(0);
         const output = event.outputBuffer.getChannelData(0);
-        const bitDepth = getAudioQuality().bitDepth;
-        const levels = Math.pow(2, bitDepth);
+        // Get current bit depth dynamically using the ref
+        const currentBitDepth = Math.min(16, 4 + guessCountRef.current * 2);
+        const levels = Math.pow(2, currentBitDepth);
 
         for (let i = 0; i < input.length; i++) {
           // Quantize the audio to simulate lower bit depth
@@ -230,6 +245,11 @@ export default function PokemonCoopGame() {
     }
 
     if (audioRef.current) {
+      // Resume audio context if it's suspended (required by browsers)
+      if (audioContextRef.current?.state === 'suspended') {
+        audioContextRef.current.resume();
+      }
+
       if (audioRef.current.paused) {
         audioRef.current.play();
       } else {
@@ -514,7 +534,7 @@ export default function PokemonCoopGame() {
                         {audioPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                       </button>
                       <button
-                        onClick={() => setAudioEnabled(!audioEnabled)}
+                        onClick={toggleMute}
                         className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-2 hover:bg-[#d0d0d0]"
                       >
                         {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}

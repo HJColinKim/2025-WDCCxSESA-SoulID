@@ -8,7 +8,7 @@ import { Volume2, VolumeX, Minimize2, X, Square, Play, Pause } from "lucide-reac
 const pokemonData = [
   {
     id: 25,
-    name: "Mortal Kombat",
+    name: "mortal kombat",
     image: "/images/MK1SubScorp.jpg",
     audio: "/audio/MkAudio.mp3",
   },
@@ -52,7 +52,7 @@ const pokemonData = [
     cry: "Arti arti cuno!",
     generation: 1,
     type: "Ice/Flying",
-    audio: "/audio/wiiaudio.mp3",
+    audio: "/audio/wiiaudio.mp3 ",
   },
 ]
 
@@ -177,19 +177,29 @@ export default function PokemonCoopGame() {
   }
 
   const getCurrentImageQuality = () => {
+    // If the game is finished, show the image at its largest size.
+    if (gameState === 'finished') {
+      return 128;
+    }
+
     // Revert to the original 5-step size progression.
-    const qualityLevels = [16, 32, 64, 96, 128];
+    const qualityLevels = [16, 32, 64, 96, 128]; 
     const level = Math.min(guesses.length, qualityLevels.length - 1);
     return qualityLevels[level];
-  };
+  };  
 
   const getImageFilter = () => {
+    // If the game is finished, show the image with no filters.
+    if (gameState === 'finished') {
+      return 'none';
+    }
+
     // Start at 40% quality and increase by 15% each time.
     const effectLevel = Math.min(100, 40 + guesses.length * 15);
 
     // Start with 8px of blur and reduce it by 2px each time.
     const blur = Math.max(0, 8 - guesses.length * 2);
-
+    
     return `blur(${blur}px) contrast(${effectLevel}%) brightness(${effectLevel}%) saturate(${effectLevel}%)`;
   };
 

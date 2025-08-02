@@ -41,7 +41,7 @@ const SocialCreditsPopup: React.FC<SocialCreditsPopupProps> = ({ onClose }) => {
               className="w-4 h-4 border border-yellow-300"
               onError={(e) => { e.currentTarget.src = 'https://placehold.co/16x16/de2910/ffc72c?text=★'; }}
             />
-            <span className="text-sm font-bold text-black">系统警告</span>
+            <span className="text-sm font-bold text-black">系统警告 (System Wanring!)</span>
           </div>
           <button
             onClick={onClose}

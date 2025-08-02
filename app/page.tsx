@@ -183,16 +183,16 @@ export default function PokemonCoopGame() {
             {/* Main Game Window */}
             <div className="lg:col-span-2 bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-6">
               <div className="text-center mb-6">
-                <h1 className="text-3xl font-bold mb-2">🎮 POKÉMON CO-OP GUESSER</h1>
+                <h1 className="text-3xl font-bold mb-2">🎮 NOSTALGIA CO-OP GUESSER</h1>
                 <div className="text-sm text-gray-600 mb-4">Authentic Windows 95 Gaming Experience™</div>
               </div>
 
               <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-4 mb-6">
                 <h2 className="font-bold mb-3 flex items-center">📋 HOW TO PLAY:</h2>
                 <ul className="text-sm space-y-2">
-                  <li>• Both players see the same pixelated Pokémon image</li>
-                  <li>• Both players hear the same low-quality Pokémon cry</li>
-                  <li>• Work together to guess the Pokémon name!</li>
+                  <li>• Player 1 sees a retro image clue</li>
+                  <li>• Player 2 hears a low-quality Nostalgia sound clue</li>
+                  <li>• Work together to guess the Retro game or character!!!</li>
                   <li>• Each wrong guess improves image and audio quality</li>
                   <li>• Try to guess in as few attempts as possible!</li>
                   <li>• Communicate with your partner for best results!</li>
@@ -206,7 +206,7 @@ export default function PokemonCoopGame() {
                 >
                   🎯 PLAY GAME
                 </button>
-                <div className="text-xs text-gray-600 mt-2">Click to start your Pokémon adventure!</div>
+                <div className="text-xs text-gray-600 mt-2">Click to start your journey into the past!</div>
               </div>
 
               {/* System Info */}
@@ -263,7 +263,6 @@ export default function PokemonCoopGame() {
                     <div>Games Played: 0</div>
                     <div>Best Score: ---</div>
                     <div>Success Rate: ---%</div>
-                    <div>Favorite Gen: ---</div>
                   </div>
                 </div>
               </div>
@@ -361,7 +360,7 @@ export default function PokemonCoopGame() {
         {/* Title Bar */}
         <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] mb-4">
           <div className="bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between">
-            <span className="text-sm font-bold">🕹️ Pokémon Co-op Guesser - GAME IN PROGRESS</span>
+            <span className="text-sm font-bold">🕹️ Nostalgia Co-op Guesser - GAME IN PROGRESS</span>
             <div className="flex gap-1">
               <button className="w-4 h-4 bg-[#c0c0c0] border border-black text-black text-xs flex items-center justify-center hover:bg-[#d0d0d0]">
                 <Minimize2 className="w-2 h-2" />
@@ -385,7 +384,7 @@ export default function PokemonCoopGame() {
             {/* Image and Audio Display */}
             <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-4">
               <div className="bg-gradient-to-r from-[#008080] to-[#004040] text-white px-2 py-1 mb-4">
-                <span className="text-sm font-bold">🎯 MYSTERY POKÉMON</span>
+                <span className="text-sm font-bold">🎯 MYSTERY NOSTALGIA TOPIC</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -437,7 +436,7 @@ export default function PokemonCoopGame() {
                           <span className="text-xs">(Quality: {getAudioQuality().clarity}/5)</span>
                         </div>
                       ) : (
-                        <div>Click play to hear cry</div>
+                        <div>Click play to hear audio hint</div>
                       )}
                     </div>
                     <div className="text-green-400 text-xs">Bitrate: {8 + guessCount * 16}kbps</div>
@@ -458,7 +457,7 @@ export default function PokemonCoopGame() {
                       value={currentGuess}
                       onChange={(e) => setCurrentGuess(e.target.value)}
                       onKeyPress={(e) => e.key === "Enter" && makeGuess()}
-                      placeholder="Enter Pokémon name..."
+                      placeholder="Enter your guess..."
                       className="flex-1 border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white font-mono"
                     />
                     <button
@@ -531,8 +530,8 @@ export default function PokemonCoopGame() {
               </div>
               <div className="bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-3 h-48 overflow-y-auto">
                 <div className="text-green-400 font-mono text-xs">
-                  <div>C:\POKEMON\GUESSER&gt; start_game.exe</div>
-                  <div>Loading Pokémon database...</div>
+                  <div>C:\NOSTALGIA\GUESSER&gt; start_game.exe</div>
+                  <div>Loading Nostalgia database...</div>
                   <div>
                     Selected: #{currentPokemon.id} (Gen {currentPokemon.generation})
                   </div>

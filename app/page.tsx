@@ -1073,7 +1073,7 @@ function PokemonCoopGame() {
                 <div className="text-xs font-bold">POKÉMON CARDS</div>
                 <div className="text-xs">Booster Packs $3.99</div>
                 <div className="text-xs">Rare Holographics!</div>
-                <button className="bg-red-500 text-white px-2 py-1 text-xs mt-1 border border-black hover:bg-red-600">
+                <button className="bg-red-500 text-white px-2 py-1 text-xs mt-1 border border-black hover:bg-red-600" onClick={() => window.open('https://www.ebay.com/itm/145273576132?itmmeta=01K1N04S0CAH7TY3Q8JGAT7B14&hash=item21d2fadac4:g:VvAAAOSwaZNkfk2q&itmprp=enc%3AAQAKAAAA4MHg7L1Zz0LA5DYYmRTS30k5RHVYkZpzu2Uif4ROI0D44sSm8ARIUsCvRO1E5cZuZG1brFD1t6%2B8urjzybqnNO6n0ERi3Wp9v2s2oTGHGbcSS%2BU2c5XZhSL39xGJB0JpVMK4wvuPks%2FRrMvRQEY5kbLQ6Roofam9CY2kDzRuEIyAYFwkbjtRoGo9QQSsVShFQzG%2FWEhheAeiBp%2BVi%2FKCDAL9ZKSrwHlZioLYO3VBbeCmdHun%2Bqsmooc9%2BLMFNwsGUehT%2FJ4dJaEJgFQ8QLdnT8iqZsQUUE0sHiWjuXsYHo0L%7Ctkp%3ABk9SR7iQk6CNZg&var=444460969126', '_blank')}>
                   BUY NOW!
                 </button>
               </div>

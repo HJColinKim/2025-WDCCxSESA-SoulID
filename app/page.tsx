@@ -18,7 +18,7 @@ const pokemonData = [
   {
     id: 6,
     name: "pacman",
-    image: "/images/Pacman.jpg",
+    image: "/images/pacman.png",
     cry: "Char char izard!",
     generation: 1,
     type: "Fire/Flying",
@@ -192,12 +192,12 @@ export default function PokemonCoopGame() {
   };
 
   const getAudioQuality = () => {
-    // Simulate audio quality improvement with bit depth
-    const volume = Math.min(1, 0.15 + guessCount * 0.12) // Lower starting volume
+    // Slower improvement progression to make rounds more challenging
+    const volume = Math.min(1, 0.18 + guessCount * 0.07) // Slower volume increase
     const clarity = guessCount + 1
-    const filterFrequency = Math.min(22050, 1200 + guessCount * 3000); // Higher starting frequency
-    const bitDepth = Math.min(16, 3 + guessCount * 2.5); // Start very low for heavy crushing
-    const sampleRateReduction = Math.max(1, 16 - guessCount * 3); // Heavy sample rate reduction at start
+    const filterFrequency = Math.min(22050, 1200 + guessCount * 2200); // Smaller frequency jumps
+    const bitDepth = Math.min(16, 3.5 + guessCount * 1.8); // Slower bit depth improvement
+    const sampleRateReduction = Math.max(1, 11 - guessCount * 1.4); // Slower crushing reduction
     return { volume, clarity, filterFrequency, bitDepth, sampleRateReduction }
   }
 
@@ -235,8 +235,8 @@ export default function PokemonCoopGame() {
         const output = event.outputBuffer.getChannelData(0);
 
         // Get current quality settings using the ref for stable values
-        const currentBitDepth = Math.min(16, 3 + guessCountRef.current * 2.5);
-        const currentSampleReduction = Math.max(1, 16 - guessCountRef.current * 3);
+        const currentBitDepth = Math.min(16, 3.5 + guessCountRef.current * 1.8);
+        const currentSampleReduction = Math.max(1, 11 - guessCountRef.current * 1.4);
 
         const levels = Math.pow(2, currentBitDepth);
 
@@ -245,8 +245,8 @@ export default function PokemonCoopGame() {
           if (sampleCounter % Math.floor(currentSampleReduction) === 0) {
             // Bit depth reduction: quantize the audio to simulate lower bit depth
             const quantized = Math.round(input[i] * levels) / levels;
-            // Add slight overdrive for more crushing effect
-            lastCrushedSample = Math.tanh(quantized * 1.5);
+            // Lighter overdrive for less harsh distortion
+            lastCrushedSample = Math.tanh(quantized * 1.2);
           }
 
           output[i] = lastCrushedSample;
@@ -580,7 +580,7 @@ export default function PokemonCoopGame() {
 
             {/* Guess Input */}
             {gameState === "playing" && (
-              <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-4">
+              <div className="bg-[#c0c0c0] border-2 border-t-white border-l-[#808080] border-r-[#808080] border-b-[#808080] p-4">
                 <div className="bg-gradient-to-r from-[#800080] to-[#400040] text-white px-2 py-1 mb-4">
                   <span className="text-sm font-bold">💭 MAKE YOUR GUESS</span>
                 </div>
@@ -605,7 +605,7 @@ export default function PokemonCoopGame() {
             )}
 
             {/* Game Status */}
-            <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-4">
+            <div className="bg-[#c0c0c0] border-2 border-t-white border-l-[#808080] border-r-[#808080] border-b-[#808080] p-4">
               <div className="bg-gradient-to-r from-[#008000] to-[#004000] text-white px-2 py-1 mb-4">
                 <span className="text-sm font-bold">📊 GAME STATUS</span>
               </div>
@@ -618,7 +618,7 @@ export default function PokemonCoopGame() {
                     {guessCount > 0 && (
                       <div className="text-sm text-gray-600">Last guess: "{guesses[guesses.length - 1]}"</div>
                     )}
-                    
+
                   </div>
                 )}
                 {gameState === "finished" && (
@@ -663,7 +663,7 @@ export default function PokemonCoopGame() {
                 <div className="text-green-400 font-mono text-xs">
                   <div>C:\NOSTALGIA\GUESSER&gt; start_game.exe</div>
                   <div>Loading Nostalgia database...</div>
-                  
+
                   <div>Initializing graphics...</div>
                   <div>Initializing audio...</div>
                   <div>{"=".repeat(30)}</div>

@@ -387,6 +387,11 @@ function PokemonCoopGame() {
   if (gameState === "menu") {
     return (
       <div className="min-h-screen bg-[#c0c0c0] p-4 font-mono relative win95-cursor">
+        {/* Add audio elements so they are available in the menu state */}
+        <audio ref={audioRef} />
+        <audio ref={clickAudioRef} src="/audio/click.mp3" preload="auto" />
+        <audio ref={errorAudioRef} preload="auto" />
+
         {/* Custom cursor styles */}
         <style jsx global>{`
           .win95-cursor {

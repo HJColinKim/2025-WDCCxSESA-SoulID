@@ -9,10 +9,10 @@ import { AdProvider, useAdManager } from "./adsManager"
 const pokemonData = [
   {
     id: 25,
-    name: "mortal kombat",
-    image: "/images/MK1SubScorp.jpg",
-    audio: "/audio/MkAudio.mp3",
-    crushMultiplier: 0.7, // Normal crushing
+    name: "halo",
+    image: "/images/halo.png",
+    audio: "/audio/haloaudio.mp3",
+    crushMultiplier: 1, // Normal crushing
   },
   {
     id: 6,
@@ -66,15 +66,18 @@ function PokemonCoopGame() {
   const [showWinRARPopup, setShowWinRARPopup] = useState(false)
   const [audioPlaying, setAudioPlaying] = useState(false)
   const [audioEnabled, setAudioEnabled] = useState(true)
+  // Add chat-related state
+  const [showChatPopup, setShowChatPopup] = useState(false)
+  const [chatMessages, setChatMessages] = useState<Array<{ text: string, sender: 'user' | 'character' }>>([])
+  const [chatInput, setChatInput] = useState("")
   const audioRef = useRef<HTMLAudioElement>(null)
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const filterRef = useRef<BiquadFilterNode | null>(null);
-  const bitCrusherRef = useRef<AudioWorkletNode | null>(null);
   const guessCountRef = useRef(0);
   const gameLogRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [isFirstGame, setIsFirstGame] = useState(true);
+  const [usedPokemonIds, setUsedPokemonIds] = useState<number[]>([]);
 
   const { showAdPopup } = useAdManager();
   const clickAudioRef = useRef<HTMLAudioElement>(null);
@@ -193,6 +196,47 @@ function PokemonCoopGame() {
   }, [guesses.length, gameState, currentPokemon]);
 
   useEffect(() => {
+    const audio = audioRef.current;
+    const handlePlay = () => setAudioPlaying(true);
+    const handlePause = () => setAudioPlaying(false);
+    const handleLoadedMetadata = () => {
+      if (audio) {
+        console.log("Audio loaded, duration:", audio.duration);
+        setAudioDuration(audio.duration);
+      }
+    };
+    const handleCanPlayThrough = () => {
+      if (audio && audio.duration) {
+        console.log("Audio can play through, duration:", audio.duration);
+        setAudioDuration(audio.duration);
+      }
+    };
+
+    if (audio) {
+      audio.addEventListener('play', handlePlay);
+      audio.addEventListener('pause', handlePause);
+      audio.addEventListener('ended', handlePause);
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.addEventListener('canplaythrough', handleCanPlayThrough);
+
+      // Force load if src is already set
+      if (audio.src && audio.readyState >= 1) {
+        handleLoadedMetadata();
+      }
+    }
+
+    return () => {
+      if (audio) {
+        audio.removeEventListener('play', handlePlay);
+        audio.removeEventListener('pause', handlePause);
+        audio.removeEventListener('ended', handlePause);
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.removeEventListener('canplaythrough', handleCanPlayThrough);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     // Update the ref whenever guessCount changes
     guessCountRef.current = guessCount;
 
@@ -202,42 +246,39 @@ function PokemonCoopGame() {
       if (audioRef.current.src !== newSrc) {
         audioRef.current.src = currentPokemon.audio;
         audioRef.current.load(); // Reload the audio element to apply the new source
+
+        // Wait for metadata to load and set duration
+        const handleLoadedData = () => {
+          if (audioRef.current && audioRef.current.duration) {
+            console.log("New audio loaded, duration:", audioRef.current.duration);
+            setAudioDuration(audioRef.current.duration);
+            // Force volume reset to ensure audio is ready
+            audioRef.current.volume = audioEnabled ? getAudioQuality().volume : 0;
+          }
+          audioRef.current?.removeEventListener('loadeddata', handleLoadedData);
+        };
+        audioRef.current.addEventListener('loadeddata', handleLoadedData);
+        
+        // Additional event listener for loadedmetadata
+        const handleLoadedMetadata = () => {
+          if (audioRef.current && audioRef.current.duration) {
+            console.log("Metadata loaded, duration:", audioRef.current.duration);
+            setAudioDuration(audioRef.current.duration);
+            // Force volume reset to ensure audio is ready
+            audioRef.current.volume = audioEnabled ? getAudioQuality().volume : 0;
+          }
+          audioRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        };
+        audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
       }
 
-      // Update volume and other audio parameters
-      audioRef.current.volume = audioEnabled ? getAudioQuality().volume : 0;
-      const quality = getAudioQuality();
-      if (filterRef.current) {
-        filterRef.current.frequency.value = quality.filterFrequency;
-      }
-      if (bitCrusherRef.current) {
-        const bitDepthParam = bitCrusherRef.current.parameters.get('bitDepth');
-        const sampleRateReductionParam = bitCrusherRef.current.parameters.get('sampleRateReduction');
-        if (bitDepthParam) bitDepthParam.value = quality.bitDepth;
-        if (sampleRateReductionParam) sampleRateReductionParam.value = quality.sampleRateReduction;
+      // Update volume - force a volume change to trigger audio initialization
+      const targetVolume = audioEnabled ? getAudioQuality().volume : 0;
+      if (audioRef.current.volume !== targetVolume) {
+        audioRef.current.volume = targetVolume;
       }
     }
   }, [currentPokemon, guessCount, audioEnabled]);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    const handlePlay = () => setAudioPlaying(true);
-    const handlePause = () => setAudioPlaying(false);
-
-    if (audio) {
-      audio.addEventListener('play', handlePlay);
-      audio.addEventListener('pause', handlePause);
-      audio.addEventListener('ended', handlePause);
-    }
-
-    return () => {
-      if (audio) {
-        audio.removeEventListener('play', handlePlay);
-        audio.removeEventListener('pause', handlePause);
-        audio.removeEventListener('ended', handlePause);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     // Global click handler for all clicks
@@ -267,23 +308,41 @@ function PokemonCoopGame() {
 
   const startGame = () => {
     playClickSound();
-    const randomPokemon = pokemonData[Math.floor(Math.random() * pokemonData.length)]
+    let availablePokemon = pokemonData;
+    
+    // Filter out used pokemon if we haven't used all of them yet
+    if (usedPokemonIds.length < pokemonData.length) {
+      availablePokemon = pokemonData.filter(pokemon => !usedPokemonIds.includes(pokemon.id));
+    } else {
+      // Reset the used list if all have been used
+      setUsedPokemonIds([]);
+    }
+    
+    // If it's the first game, exclude halo from available options
+    if (isFirstGame) {
+      availablePokemon = availablePokemon.filter(pokemon => pokemon.name !== "halo");
+      setIsFirstGame(false);
+    }
+    
+    const randomPokemon = availablePokemon[Math.floor(Math.random() * availablePokemon.length)];
+    
+    // Add the selected pokemon to the used list
+    setUsedPokemonIds(prev => [...prev, randomPokemon.id]);
 
     console.log("Selected subject data:")
 
-    // Disconnect nodes but don't close context
-    if (sourceRef.current) {
-      sourceRef.current.disconnect();
-    }
-    filterRef.current = null;
-    bitCrusherRef.current = null;
-
-    //Simple random algorithm for choosing which 'subject' to choose. Should be kept random but could utilize elo system to make popular ones pop up first 
     setCurrentPokemon(randomPokemon)
     setGameState("playing")
     setGuesses([])
     setGuessCount(0)
     setCurrentGuess("")
+    setAudioDuration(0)
+
+    // Preload the audio for the selected pokemon
+    if (audioRef.current) {
+      audioRef.current.src = randomPokemon.audio;
+      audioRef.current.load();
+    }
   }
 
   const makeGuess = () => {
@@ -322,34 +381,59 @@ function PokemonCoopGame() {
     guessCountRef.current = 0;
     setCurrentGuess("")
     setAudioPlaying(false)
-
-    // Disconnect nodes but don't close context
-    if (sourceRef.current) {
-      sourceRef.current.disconnect();
-    }
-    filterRef.current = null;
-    bitCrusherRef.current = null;
+    setAudioDuration(0)
   }
 
   const playAgain = () => {
     playClickSound();
-    const randomPokemon = pokemonData[Math.floor(Math.random() * pokemonData.length)]
-
-    // Disconnect nodes but don't close context
-    if (sourceRef.current) {
-      sourceRef.current.disconnect();
+    let availablePokemon = pokemonData;
+    
+    // Filter out used pokemon if we haven't used all of them yet
+    if (usedPokemonIds.length < pokemonData.length) {
+      availablePokemon = pokemonData.filter(pokemon => !usedPokemonIds.includes(pokemon.id));
+    } else {
+      // Reset the used list if all have been used
+      setUsedPokemonIds([]);
     }
-    filterRef.current = null;
-    bitCrusherRef.current = null;
+    
+    const randomPokemon = availablePokemon[Math.floor(Math.random() * availablePokemon.length)];
+    
+    // Add the selected pokemon to the used list
+    setUsedPokemonIds(prev => [...prev, randomPokemon.id]);
 
-    // Start new game directly
+    // Reset audio state first
+    setAudioPlaying(false)
+    setAudioDuration(0)
+    // Reset chat state
+    setShowChatPopup(false)
+    setChatMessages([])
+    setChatInput("")
+
+    // Reset game state
     setCurrentPokemon(randomPokemon)
     setGameState("playing")
     setGuesses([])
     setGuessCount(0)
     guessCountRef.current = 0;
     setCurrentGuess("")
-    setAudioPlaying(false)
+
+    // Preload the audio for the selected pokemon after state reset
+    setTimeout(() => {
+      if (audioRef.current) {
+        audioRef.current.src = randomPokemon.audio;
+        audioRef.current.load();
+
+        // Add event listener for when new audio loads
+        const handleNewAudioLoad = () => {
+          if (audioRef.current && audioRef.current.duration) {
+            console.log("Play again - new audio loaded, duration:", audioRef.current.duration);
+            setAudioDuration(audioRef.current.duration);
+          }
+          audioRef.current?.removeEventListener('loadedmetadata', handleNewAudioLoad);
+        };
+        audioRef.current.addEventListener('loadedmetadata', handleNewAudioLoad);
+      }
+    }, 0);
   }
 
   const getCurrentImageQuality = () => {
@@ -378,17 +462,21 @@ function PokemonCoopGame() {
   };
 
   const getAudioQuality = () => {
-    // Apply crush multiplier from current pokemon data
-    const crushMultiplier = currentPokemon.crushMultiplier || 1.0;
     const volumeMultiplier = currentPokemon.volumeMultiplier || 1.0;
+    const volume = Math.min(1, 0.8 * volumeMultiplier); // Set to 80% volume always
 
-    // Slower improvement progression to make rounds more challenging
-    const volume = Math.min(1, 0.18 + guessCount * 0.07 * volumeMultiplier) // Slower volume increase
-    const clarity = guessCount + 1
-    const filterFrequency = Math.min(22050, 1200 + guessCount * 2200); // Smaller frequency jumps
-    const bitDepth = Math.min(16, (3.5 + guessCount * 1.8) / crushMultiplier); // Apply multiplier to bit depth
-    const sampleRateReduction = Math.max(1, (11 - guessCount * 1.4) * crushMultiplier); // Apply multiplier to sample reduction
-    return { volume, clarity, filterFrequency, bitDepth, sampleRateReduction }
+    // Calculate how much of the audio to play based on attempt number (divide into 5 segments)
+    const maxDuration = audioDuration || 30; // Fallback to 30 seconds if duration not available
+    const segmentDuration = maxDuration / 5; // Divide into 5 segments
+    const calculatedDuration = segmentDuration * (guessCount + 1);
+
+    // For very short audio files, ensure minimum playback time
+    const minPlaybackTime = Math.min(0.5, maxDuration); // At least 1 second or full duration if shorter
+    const allowedDuration = Math.max(minPlaybackTime, Math.min(maxDuration, calculatedDuration));
+
+    console.log(`Audio Quality Debug - guessCount: ${guessCount}, maxDuration: ${maxDuration}, segmentDuration: ${segmentDuration}, calculatedDuration: ${calculatedDuration}, allowedDuration: ${allowedDuration}`);
+
+    return { volume, allowedDuration }
   }
 
   const toggleMute = () => {
@@ -403,71 +491,157 @@ function PokemonCoopGame() {
 
   const playAudio = async () => {
     playClickSound();
-    let audioContext = audioContextRef.current;
-
-    // Initialize AudioContext and source node once
-    if (!audioContext) {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioContextRef.current = audioContext;
-      sourceRef.current = audioContext.createMediaElementSource(audioRef.current!);
-      await audioContext.audioWorklet.addModule('/bit-crusher-processor.js');
-    }
-
-    // Recreate and connect nodes if they don't exist for the current playback
-    if (!bitCrusherRef.current) {
-      const quality = getAudioQuality();
-
-      // Create low-pass filter
-      const filter = audioContext.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = quality.filterFrequency;
-      filterRef.current = filter;
-
-      // Create AudioWorkletNode
-      const bitCrusher = new AudioWorkletNode(audioContext, 'bit-crusher-processor');
-      const bitDepthParam = bitCrusher.parameters.get('bitDepth');
-      const sampleRateReductionParam = bitCrusher.parameters.get('sampleRateReduction');
-      if (bitDepthParam) bitDepthParam.value = quality.bitDepth;
-      if (sampleRateReductionParam) sampleRateReductionParam.value = quality.sampleRateReduction;
-      bitCrusherRef.current = bitCrusher;
-
-      // Connect the audio chain
-      sourceRef.current!.connect(filter);
-      filter.connect(bitCrusher);
-      bitCrusher.connect(audioContext.destination);
-    }
-
-    // Update parameters for current playback
-    const quality = getAudioQuality();
-    if (filterRef.current) {
-      filterRef.current.frequency.value = quality.filterFrequency;
-    }
-    if (bitCrusherRef.current) {
-      const bitDepthParam = bitCrusherRef.current.parameters.get('bitDepth');
-      const sampleRateReductionParam = bitCrusherRef.current.parameters.get('sampleRateReduction');
-      if (bitDepthParam) bitDepthParam.value = quality.bitDepth;
-      if (sampleRateReductionParam) sampleRateReductionParam.value = quality.sampleRateReduction;
-    }
 
     if (audioRef.current) {
-      // Resume audio context if it's suspended (required by browsers)
-      if (audioContext.state === 'suspended') {
-        await audioContext.resume();
+      // Force volume refresh before playing
+      const quality = getAudioQuality();
+      audioRef.current.volume = audioEnabled ? quality.volume : 0;
+      
+      // Ensure audio is loaded before trying to play
+      if (audioRef.current.readyState < 2) {
+        console.log("Audio not ready, waiting for load...");
+        // Audio not ready, wait for it to load
+        const waitForLoad = () => {
+          return new Promise<void>((resolve) => {
+            const checkReady = () => {
+              if (audioRef.current && audioRef.current.readyState >= 2) {
+                if (audioRef.current.duration && audioDuration === 0) {
+                  console.log("Setting audio duration from playAudio:", audioRef.current.duration);
+                  setAudioDuration(audioRef.current.duration);
+                }
+                // Force volume set again after audio is ready
+                audioRef.current.volume = audioEnabled ? getAudioQuality().volume : 0;
+                resolve();
+              } else {
+                setTimeout(checkReady, 100);
+              }
+            };
+            checkReady();
+          });
+        };
+
+        await waitForLoad();
       }
 
+      console.log("Playing audio with quality:", quality);
+
       if (audioRef.current.paused) {
+        // Set up event listener to stop audio at the allowed duration
+        const handleTimeUpdate = () => {
+          if (audioRef.current && audioRef.current.currentTime >= quality.allowedDuration) {
+            console.log(`Stopping audio at ${audioRef.current.currentTime}s (limit: ${quality.allowedDuration}s)`);
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0; // Reset to beginning
+            audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
+          }
+        };
+
+        audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
+        audioRef.current.currentTime = 0; // Always start from beginning
+
         try {
+          console.log("Starting audio playback...");
           await audioRef.current.play();
         } catch (error) {
-          // Ignore AbortError which is expected on rapid play/pause clicks
           if (error instanceof Error && error.name !== 'AbortError') {
             console.error("Audio playback failed:", error);
           }
         }
       } else {
+        console.log("Pausing audio");
         audioRef.current.pause();
+        audioRef.current.currentTime = 0; // Reset to beginning when paused
       }
     }
+  }
+
+  // Add character responses
+  const getCharacterResponses = (characterName: string) => {
+    const responses: { [key: string]: string[] } = {
+      "mortal kombat": [
+        "GET OVER HERE!",
+        "Finish him!",
+        "Fatality!",
+        "Welcome to the tournament, warrior.",
+        "Your soul is mine!",
+        "Test your might!"
+      ],
+      "pacman": [
+        "Waka waka waka!",
+        "Those ghosts never give up!",
+        "Power pellets are my favorite snack!",
+        "I've been eating dots since 1980!",
+        "Blinky, Pinky, Inky, and Sue are such troublemakers!",
+        "Want to help me clear the maze?"
+      ],
+      "crash bandicoot": [
+        "Woah!",
+        "Somebody say fruit?",
+        "Spin to win, baby!",
+        "Dr. Cortex is up to no good again!",
+        "Aku Aku protects me on my adventures!",
+        "Time to crash the party!"
+      ],
+      "mario": [
+        "It's-a me, Mario!",
+        "Let's-a go!",
+        "Mamma mia!",
+        "Princess Peach is in another castle!",
+        "Yahoo! Here we go!",
+        "Thank you so much for playing my game!"
+      ],
+      "sonic": [
+        "Gotta go fast!",
+        "You're too slow!",
+        "Juice and jam time!",
+        "Way past cool!",
+        "I'm the fastest thing alive!",
+        "Time to juice and jam!"
+      ],
+      "wii sports": [
+        "Nice swing!",
+        "Strike!",
+        "Home run!",
+        "Let's play some sports!",
+        "Motion controls are the future!",
+        "Want to bowl a perfect game?"
+      ]
+    }
+    return responses[characterName.toLowerCase()] || ["Hello there!", "Nice to meet you!", "Thanks for playing!"]
+  }
+
+  const handleChatSubmit = () => {
+    if (!chatInput.trim()) return
+
+    playClickSound()
+    const newMessages = [...chatMessages, { text: chatInput, sender: 'user' as const }]
+
+    // Get a random response from the character
+    const characterResponses = getCharacterResponses(currentPokemon.name)
+    const randomResponse = characterResponses[Math.floor(Math.random() * characterResponses.length)]
+
+    // Add character response after a short delay
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, { text: randomResponse, sender: 'character' as const }])
+    }, 1000)
+
+    setChatMessages(newMessages)
+    setChatInput("")
+  }
+
+  const openChat = () => {
+    playClickSound()
+    setShowChatPopup(true)
+    // Add initial greeting
+    const characterResponses = getCharacterResponses(currentPokemon.name)
+    const greeting = characterResponses[0]
+    setChatMessages([{ text: greeting, sender: 'character' }])
+  }
+
+  const closeChat = () => {
+    playClickSound()
+    setShowChatPopup(false)
+    setChatMessages([])
   }
 
   if (gameState === "menu") {
@@ -755,13 +929,13 @@ function PokemonCoopGame() {
                       {audioPlaying ? (
                         <div className="animate-pulse">
                           <br />
-                          <span className="text-xs">(Bit Depth: {getAudioQuality().bitDepth.toFixed(1)}-bit | Crush: {getAudioQuality().sampleRateReduction.toFixed(1)}x)</span>
+                          <span className="text-xs">(Playing: {getAudioQuality().allowedDuration.toFixed(1)}s of {audioDuration > 0 ? audioDuration.toFixed(1) : "?.?"}s)</span>
                         </div>
                       ) : (
                         <div>Click play to hear audio hint</div>
                       )}
                     </div>
-                    <div className="text-green-400 text-xs">Bit Crusher: {getAudioQuality().bitDepth.toFixed(1)}-bit | Sample Reduction: {getAudioQuality().sampleRateReduction.toFixed(1)}x</div>
+                    <div className="text-green-400 text-xs">Volume: {Math.round(getAudioQuality().volume * 100)}% | Duration: {getAudioQuality().allowedDuration.toFixed(1)}s / {audioDuration > 0 ? audioDuration.toFixed(1) : "?.?"}s</div>
                   </div>
                 </div>
               </div>
@@ -829,12 +1003,20 @@ function PokemonCoopGame() {
                         Better luck next time!
                       </div>
                     )}
-                    <button
-                      onClick={playAgain}
-                      className="mt-4 bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-6 py-2 hover:bg-[#d0d0d0] font-bold"
-                    >
-                      PLAY AGAIN
-                    </button>
+                    <div className="mt-4 space-y-2">
+                      <button
+                        onClick={playAgain}
+                        className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-6 py-2 hover:bg-[#d0d0d0] font-bold mr-2"
+                      >
+                        PLAY AGAIN
+                      </button>
+                      <button
+                        onClick={openChat}
+                        className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-6 py-2 hover:bg-[#d0d0d0] font-bold"
+                      >
+                        💬 CHAT WITH {currentPokemon.name.toUpperCase()}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -898,31 +1080,97 @@ function PokemonCoopGame() {
             </div>
 
 
-                  {/* NEW WINDOWS 95 AD GOES HERE */}
-<div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-3">
-  <div className="bg-gradient-to-r from-[#008080] to-[#004040] text-white px-2 py-1 mb-2">
-    <span className="text-xs font-bold">💾 UPGRADE NOW!</span>
-  </div>
-  <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-2 flex gap-2 items-center">
-    <img 
-      src="/images/windows95.jpg" 
-      alt="Windows 95 Box Art"
-      className="w-20 h-20"
-      onError={(e) => { e.currentTarget.src = 'https://placehold.co/80x80/000000/FFFFFF?text=Win95'; }}
-    />
-    <div className="text-xs text-black text-left flex-1">
-      <div className="font-bold">Windows 95</div>
-      <div>Purchase a physical copy of the brand new Windows 95, and experience the future!</div>
-      <div className="font-bold mt-1">Only $89.99!</div>
-      <button className="bg-blue-600 text-white px-2 py-1 text-xs mt-2 border border-black hover:bg-blue-700">
-        ORDER NOW
-      </button>
-    </div>
-  </div>
-</div>
+            {/* NEW WINDOWS 95 AD GOES HERE */}
+            <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-3">
+              <div className="bg-gradient-to-r from-[#008080] to-[#004040] text-white px-2 py-1 mb-2">
+                <span className="text-xs font-bold">💾 UPGRADE NOW!</span>
+              </div>
+              <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-2 flex gap-2 items-center">
+                <img
+                  src="/images/windows95.jpg"
+                  alt="Windows 95 Box Art"
+                  className="w-20 h-20"
+                  onError={(e) => { e.currentTarget.src = 'https://placehold.co/80x80/000000/FFFFFF?text=Win95'; }}
+                />
+                <div className="text-xs text-black text-left flex-1">
+                  <div className="font-bold">Windows 95</div>
+                  <div>Purchase a physical copy of the brand new Windows 95, and experience the future!</div>
+                  <div className="font-bold mt-1">Only $89.99!</div>
+                  <button className="bg-blue-600 text-white px-2 py-1 text-xs mt-2 border border-black hover:bg-blue-700">
+                    ORDER NOW
+                  </button>
+                </div>
+              </div>
+            </div>
 
           </div>
         </div>
+        {/* Chat Popup */}
+        {showChatPopup && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+            <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-96 h-96 pointer-events-auto">
+              <div className="bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between">
+                <span className="text-sm font-bold">💬 Chat with {currentPokemon.name}</span>
+                <button
+                  onClick={closeChat}
+                  className="w-4 h-4 bg-[#c0c0c0] border border-black text-black text-xs flex items-center justify-center hover:bg-[#d0d0d0]"
+                >
+                  <X className="w-2 h-2" />
+                </button>
+              </div>
+
+              <div className="p-4 h-full flex flex-col">
+                {/* Character Avatar */}
+                <div className="flex items-center gap-3 mb-4 bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-2">
+                  <img
+                    src={currentPokemon.image}
+                    alt={currentPokemon.name}
+                    className="w-12 h-12 object-cover border border-black"
+                  />
+                  <div>
+                    <div className="font-bold text-sm">{currentPokemon.name.toUpperCase()}</div>
+                    <div className="text-xs text-gray-600">Status: Online</div>
+                  </div>
+                </div>
+
+                {/* Chat Messages */}
+                <div className="flex-1 bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-3 overflow-y-auto mb-4">
+                  <div className="text-green-400 font-mono text-xs space-y-2">
+                    <div className="text-cyan-400">*** CHAT SESSION INITIATED ***</div>
+                    {chatMessages.map((message, index) => (
+                      <div key={index} className={message.sender === 'user' ? 'text-yellow-400' : 'text-green-400'}>
+                        <span className="text-white">
+                          {message.sender === 'user' ? 'YOU' : currentPokemon.name.toUpperCase()}:
+                        </span>{' '}
+                        {message.text}
+                      </div>
+                    ))}
+                    <div className="text-cyan-400 animate-pulse">&gt; Type your message...</div>
+                  </div>
+                </div>
+
+                {/* Chat Input */}
+                <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleChatSubmit()}
+                      placeholder="Type your message..."
+                      className="flex-1 border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white font-mono text-xs"
+                    />
+                    <button
+                      onClick={handleChatSubmit}
+                      className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-xs hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white font-bold"
+                    >
+                      SEND
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

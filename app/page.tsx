@@ -168,7 +168,7 @@ function PokemonCoopGame() {
   useEffect(() => {
     const adTimer = setInterval(() => {
       // You can call this from anywhere now!
-      showAdPopup();   //Disable this line for accessibility mode 
+      //showAdPopup();   //Disable this line for accessibility mode 
       //playErrorSound(); // Play error sound when a popup is shown
     }, 1000); // Trigger a random ad every 15 seconds
 
@@ -267,11 +267,11 @@ function PokemonCoopGame() {
   const getCurrentImageQuality = () => {
     // If the game is finished, show the image at its largest size.
     if (gameState === 'finished') {
-      return 128;
+      return 256;
     }
 
-    // Revert to the original 5-step size progression.
-    const qualityLevels = [16, 32, 64, 96, 128];
+    // This now controls the resolution of the pixelated image.
+    const qualityLevels = [32, 64, 96, 128, 256]; // Start at a higher resolution
     const level = Math.min(guesses.length, qualityLevels.length - 1);
     return qualityLevels[level];
   };
@@ -282,13 +282,11 @@ function PokemonCoopGame() {
       return 'none';
     }
 
-    // Start at 40% quality and increase by 15% each time.
-    const effectLevel = Math.min(100, 40 + guesses.length * 15);
+    // Start at 60% quality and increase by 10% each time.
+    const effectLevel = Math.min(100, 60 + guesses.length * 10);
 
-    // Start with 8px of blur and reduce it by 2px each time.
-    const blur = Math.max(0, 8 - guesses.length * 2);
-
-    return `blur(${blur}px) contrast(${effectLevel}%) brightness(${effectLevel}%) saturate(${effectLevel}%)`;
+    // The blur is removed to favor a pixelated reveal.
+    return `contrast(${effectLevel}%) brightness(${effectLevel}%) saturate(${effectLevel}%)`;
   };
 
   const getAudioQuality = () => {
@@ -622,26 +620,28 @@ function PokemonCoopGame() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Image Display */}
-                <div className="bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-4 text-center">
-
-                  <div className="relative inline-block">
+                <div className="bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-4 flex items-center justify-center">
+                  <div
+                    className="relative overflow-hidden"
+                    style={{ width: '256px', height: '256px' }}
+                  >
                     <img
                       src={currentPokemon.image || "/placeholder.svg"}
                       alt="Mystery Pokémon"
-                      className="pixelated mx-auto"
+                      className="pixelated"
                       style={{
+                        imageRendering: "pixelated",
+                        filter: getImageFilter(),
                         width: `${getCurrentImageQuality()}px`,
                         height: `${getCurrentImageQuality()}px`,
-                        filter: getImageFilter(),
-                        imageRendering: "pixelated",
-                      }}
+                        // Scale the low-res image to fill the container
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%) scale(var(--scale-factor, 1))',
+                        '--scale-factor': 256 / getCurrentImageQuality(),
+                      } as React.CSSProperties}
                     />
-                  </div>
-                  <div className="text-green-400 text-xs mt-2">
-                    Resolution: {getCurrentImageQuality()}x{getCurrentImageQuality()}px
-                  </div>
-                  <div className="text-green-400 text-xs">
-                    Quality: {gameState === 'finished' ? 100 : Math.min(100, 40 + guessCount * 15)}%
                   </div>
                 </div>
 

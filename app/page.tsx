@@ -73,9 +73,34 @@ export default function PokemonCoopGame() {
   const bitCrusherRef = useRef<AudioWorkletNode | null>(null);
   const guessCountRef = useRef(0);
   const gameLogRef = useRef<HTMLDivElement>(null);
+  const clickAudioRef = useRef<HTMLAudioElement>(null);
+  const errorAudioRef = useRef<HTMLAudioElement>(null);
 
   const maxGuesses = 5
   const qualityLevels = [16, 32, 64, 96, 128]
+
+  // Play click sound
+  const playClickSound = () => {
+    if (clickAudioRef.current) {
+      clickAudioRef.current.currentTime = 0;
+      clickAudioRef.current.play().catch(() => {
+        // Ignore audio play errors
+      });
+    }
+  };
+
+  // Play error sound
+  const playErrorSound = () => {
+    if (errorAudioRef.current) {
+      const errorSounds = ['error1.mp3', 'error2.mp3', 'error3.mp3'];
+      const randomError = errorSounds[Math.floor(Math.random() * errorSounds.length)];
+      errorAudioRef.current.src = `/audio/${randomError}`;
+      errorAudioRef.current.currentTime = 0;
+      errorAudioRef.current.play().catch(() => {
+        // Ignore audio play errors
+      });
+    }
+  };
 
   useEffect(() => {
     // Update the ref whenever guessCount changes
@@ -125,6 +150,20 @@ export default function PokemonCoopGame() {
   }, []);
 
   useEffect(() => {
+    // Global click handler for all clicks
+    const handleGlobalClick = () => {
+      playClickSound();
+    };
+
+    // Add event listener to document
+    document.addEventListener('click', handleGlobalClick);
+
+    return () => {
+      document.removeEventListener('click', handleGlobalClick);
+    };
+  }, []);
+
+  useEffect(() => {
     // Show WinRAR popup after 5 seconds
     const winrarTimer = setTimeout(() => {
       setShowWinRARPopup(true)
@@ -142,6 +181,7 @@ export default function PokemonCoopGame() {
   }, [])
 
   const startGame = () => {
+    playClickSound();
     const randomPokemon = pokemonData[Math.floor(Math.random() * pokemonData.length)]
 
     console.log("Selected subject data:")
@@ -164,14 +204,19 @@ export default function PokemonCoopGame() {
   const makeGuess = () => {
     if (!currentGuess.trim()) return
 
+    playClickSound();
     const newGuesses = [...guesses, currentGuess]
     setGuesses(newGuesses)
     setGuessCount(guessCount + 1)
 
     if (currentGuess.toLowerCase() === currentPokemon.name.toLowerCase()) {
       setGameState("finished")
-    } else if (guessCount + 1 >= maxGuesses) {
-      setGameState("finished")
+    } else {
+      // Play error sound for wrong guess
+      playErrorSound();
+      if (guessCount + 1 >= maxGuesses) {
+        setGameState("finished")
+      }
     }
 
     setCurrentGuess("")
@@ -185,6 +230,7 @@ export default function PokemonCoopGame() {
   }
 
   const resetGame = () => {
+    playClickSound();
     setGameState("menu")
     setGuesses([])
     setGuessCount(0)
@@ -201,6 +247,7 @@ export default function PokemonCoopGame() {
   }
 
   const playAgain = () => {
+    playClickSound();
     const randomPokemon = pokemonData[Math.floor(Math.random() * pokemonData.length)]
 
     // Disconnect nodes but don't close context
@@ -262,6 +309,7 @@ export default function PokemonCoopGame() {
   }
 
   const toggleMute = () => {
+    playClickSound();
     const newAudioEnabled = !audioEnabled;
     setAudioEnabled(newAudioEnabled);
 
@@ -271,6 +319,7 @@ export default function PokemonCoopGame() {
   }
 
   const playAudio = async () => {
+    playClickSound();
     let audioContext = audioContextRef.current;
 
     // Initialize AudioContext and source node once
@@ -340,7 +389,20 @@ export default function PokemonCoopGame() {
 
   if (gameState === "menu") {
     return (
-      <div className="min-h-screen bg-[#c0c0c0] p-4 font-mono relative">
+      <div className="min-h-screen bg-[#c0c0c0] p-4 font-mono relative win95-cursor">
+        {/* Custom cursor styles */}
+        <style jsx global>{`
+          .win95-cursor {
+            cursor: crosshair;
+          }
+          .win95-cursor button:hover {
+            cursor: pointer;
+          }
+          .win95-cursor input:hover {
+            cursor: text;
+          }
+        `}</style>
+
         {/* Desktop Background Pattern */}
         <div className="fixed inset-0 opacity-10 pointer-events-none">
           <div
@@ -546,8 +608,23 @@ export default function PokemonCoopGame() {
   }
 
   return (
-    <div className="min-h-screen bg-[#c0c0c0] p-4 font-mono">
+    <div className="min-h-screen bg-[#c0c0c0] p-4 font-mono win95-cursor">
+      {/* Custom cursor styles */}
+      <style jsx global>{`
+        .win95-cursor {
+          cursor: crosshair;
+        }
+        .win95-cursor button:hover {
+          cursor: pointer;
+        }
+        .win95-cursor input:hover {
+          cursor: text;
+        }
+      `}</style>
+
       <audio ref={audioRef} />
+      <audio ref={clickAudioRef} src="/audio/click.mp3" preload="auto" />
+      <audio ref={errorAudioRef} preload="auto" />
       <div className="mx-auto max-w-6xl">
         {/* Title Bar */}
         <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] mb-4">
@@ -600,8 +677,8 @@ export default function PokemonCoopGame() {
                     Resolution: {getCurrentImageQuality()}x{getCurrentImageQuality()}px
                   </div>
                   <div className="text-green-400 text-xs">
-  Quality: {gameState === 'finished' ? 100 : Math.min(100, 40 + guessCount * 15)}%
-</div>
+                    Quality: {gameState === 'finished' ? 100 : Math.min(100, 40 + guessCount * 15)}%
+                  </div>
                 </div>
 
                 {/* Audio Display */}

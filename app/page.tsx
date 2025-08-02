@@ -8,7 +8,7 @@ import { Volume2, VolumeX, Minimize2, X, Square, Play, Pause } from "lucide-reac
 const pokemonData = [
   {
     id: 25,
-    name: "Scorpion",
+    name: "scorpion",
     image: "/images/MK1SubScorp.jpg",
     cry: "Pika pika chu!",
     generation: 1,
@@ -17,12 +17,12 @@ const pokemonData = [
   },
   {
     id: 6,
-    name: "Charizard",
-    image: "/images/le.jpeg",
+    name: "pacman",
+    image: "/images/Pacman.jpg",
     cry: "Char char izard!",
     generation: 1,
     type: "Fire/Flying",
-    audio: "/audio/example.mp3",
+    audio: "/audio/PacMan.mp3",
   },
   {
     id: 9,

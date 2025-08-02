@@ -35,7 +35,7 @@ const pokemonData = [
     name: "mario",
     image: "/images/Mario.jpg",
 
-    audio: "/audio/mario.mp3",
+    audio: "/audio/mario2.mp3",
     crushMultiplier: 0.85, // Less crushing
   },
   {
@@ -454,7 +454,7 @@ function PokemonCoopGame() {
       return 'none';
     }
 
-    // Start at 60% quality and increase by 10% each time.
+    // Start at 60% quality and increase with each guess.
     const effectLevel = Math.min(100, 60 + guesses.length * 10);
 
     // The blur is removed to favor a pixelated reveal.
@@ -471,7 +471,7 @@ function PokemonCoopGame() {
     const calculatedDuration = segmentDuration * (guessCount + 1);
 
     // For very short audio files, ensure minimum playback time
-    const minPlaybackTime = Math.min(0.3, maxDuration); // At least 1 second or full duration if shorter
+    const minPlaybackTime = Math.min(0.2, maxDuration); // At least 1 second or full duration if shorter
     const allowedDuration = Math.max(minPlaybackTime, Math.min(maxDuration, calculatedDuration));
 
     console.log(`Audio Quality Debug - guessCount: ${guessCount}, maxDuration: ${maxDuration}, segmentDuration: ${segmentDuration}, calculatedDuration: ${calculatedDuration}, allowedDuration: ${allowedDuration}`);
@@ -908,34 +908,36 @@ function PokemonCoopGame() {
                 </div>
 
                 {/* Audio Display */}
-                <div className="bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-4 text-center">
-                  <div className="text-green-400 text-xs mb-2">🔊 AUDIO PLAYER</div>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-center gap-4">
-                      <button
-                        onClick={playAudio}
-                        className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-2 hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
-                      >
-                        {audioPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                      </button>
-                      <button
-                        onClick={toggleMute}
-                        className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-2 hover:bg-[#d0d0d0]"
-                      >
-                        {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                      </button>
+                <div className="bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-4 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-green-400 text-xs mb-2">🔊 AUDIO PLAYER</div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-center gap-4">
+                        <button
+                          onClick={playAudio}
+                          className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-2 hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
+                        >
+                          {audioPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={toggleMute}
+                          className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-2 hover:bg-[#d0d0d0]"
+                        >
+                          {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <div className="text-green-400 text-sm">
+                        {audioPlaying ? (
+                          <div className="animate-pulse">
+                            <br />
+                            <span className="text-xs">(Playing: {getAudioQuality().allowedDuration.toFixed(1)}s of {audioDuration > 0 ? audioDuration.toFixed(1) : "?.?"}s)</span>
+                          </div>
+                        ) : (
+                          <div>Click play to hear audio hint</div>
+                        )}
+                      </div>
+                      <div className="text-green-400 text-xs">Volume: {Math.round(getAudioQuality().volume * 100)}% | Duration: {getAudioQuality().allowedDuration.toFixed(1)}s / {audioDuration > 0 ? audioDuration.toFixed(1) : "?.?"}s</div>
                     </div>
-                    <div className="text-green-400 text-sm">
-                      {audioPlaying ? (
-                        <div className="animate-pulse">
-                          <br />
-                          <span className="text-xs">(Playing: {getAudioQuality().allowedDuration.toFixed(1)}s of {audioDuration > 0 ? audioDuration.toFixed(1) : "?.?"}s)</span>
-                        </div>
-                      ) : (
-                        <div>Click play to hear audio hint</div>
-                      )}
-                    </div>
-                    <div className="text-green-400 text-xs">Volume: {Math.round(getAudioQuality().volume * 100)}% | Duration: {getAudioQuality().allowedDuration.toFixed(1)}s / {audioDuration > 0 ? audioDuration.toFixed(1) : "?.?"}s</div>
                   </div>
                 </div>
               </div>
@@ -1014,7 +1016,7 @@ function PokemonCoopGame() {
                         onClick={openChat}
                         className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-6 py-2 hover:bg-[#d0d0d0] font-bold"
                       >
-                        💬 CHAT WITH {currentPokemon.name.toUpperCase()}
+                        💬 AOL CHAT ROOM WITH {currentPokemon.name.toUpperCase()}
                       </button>
                     </div>
                   </div>
@@ -1108,9 +1110,9 @@ function PokemonCoopGame() {
         {/* Chat Popup */}
         {showChatPopup && (
           <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-            <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-96 h-96 pointer-events-auto">
+            <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-96 h-[480px] pointer-events-auto flex flex-col">
               <div className="bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between">
-                <span className="text-sm font-bold">💬 Chat with {currentPokemon.name}</span>
+                <span className="text-sm font-bold">💬 AOL CHAT ROOM WITH {currentPokemon.name.toUpperCase()}</span>
                 <button
                   onClick={closeChat}
                   className="w-4 h-4 bg-[#c0c0c0] border border-black text-black text-xs flex items-center justify-center hover:bg-[#d0d0d0]"
@@ -1119,7 +1121,7 @@ function PokemonCoopGame() {
                 </button>
               </div>
 
-              <div className="p-4 h-full flex flex-col">
+              <div className="p-4 flex-1 flex flex-col overflow-hidden">
                 {/* Character Avatar */}
                 <div className="flex items-center gap-3 mb-4 bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-2">
                   <img

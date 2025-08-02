@@ -13,6 +13,7 @@ const pokemonData = [
     cry: "Pika pika chu!",
     generation: 1,
     type: "Electric",
+    audio: "/audio/pikachu.mp3",
   },
   {
     id: 6,
@@ -21,6 +22,7 @@ const pokemonData = [
     cry: "Char char izard!",
     generation: 1,
     type: "Fire/Flying",
+    audio: "/audio/pikachu.mp3",
   },
   {
     id: 9,
@@ -29,6 +31,7 @@ const pokemonData = [
     cry: "Blas blas toise!",
     generation: 1,
     type: "Water",
+    audio: "/audio/pikachu.mp3",
   },
   {
     id: 3,
@@ -37,6 +40,7 @@ const pokemonData = [
     cry: "Venus venus aur!",
     generation: 1,
     type: "Grass/Poison",
+    audio: "/audio/pikachu.mp3",
   },
   {
     id: 150,
@@ -45,6 +49,7 @@ const pokemonData = [
     cry: "Mew mew two!",
     generation: 1,
     type: "Psychic",
+    audio: "/audio/pikachu.mp3",
   },
   {
     id: 144,
@@ -53,6 +58,7 @@ const pokemonData = [
     cry: "Arti arti cuno!",
     generation: 1,
     type: "Ice/Flying",
+    audio: "/audio/pikachu.mp3",
   },
 ]
 

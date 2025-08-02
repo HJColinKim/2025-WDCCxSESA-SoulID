@@ -9,7 +9,7 @@ const pokemonData = [
   {
     id: 25,
     name: "Pikachu",
-    image: "/placeholder.svg?height=128&width=128&text=Pikachu",
+    image: "https://wiki.leagueoflegends.com/en-us/images/thumb/Gragas_Render.png/354px-Gragas_Render.png?72089",
     cry: "Pika pika chu!",
     generation: 1,
     type: "Electric",
@@ -18,7 +18,7 @@ const pokemonData = [
   {
     id: 6,
     name: "Charizard",
-    image: "/placeholder.svg?height=128&width=128&text=Charizard",
+    image: "https://wiki.leagueoflegends.com/en-us/images/thumb/Gragas_Render.png/354px-Gragas_Render.png?72089",
     cry: "Char char izard!",
     generation: 1,
     type: "Fire/Flying",
@@ -27,7 +27,7 @@ const pokemonData = [
   {
     id: 9,
     name: "Blastoise",
-    image: "/placeholder.svg?height=128&width=128&text=Blastoise",
+    image: "https://wiki.leagueoflegends.com/en-us/images/thumb/Gragas_Render.png/354px-Gragas_Render.png?72089",
     cry: "Blas blas toise!",
     generation: 1,
     type: "Water",
@@ -36,7 +36,7 @@ const pokemonData = [
   {
     id: 3,
     name: "Venusaur",
-    image: "/placeholder.svg?height=128&width=128&text=Venusaur",
+    image: "https://wiki.leagueoflegends.com/en-us/images/thumb/Gragas_Render.png/354px-Gragas_Render.png?72089",
     cry: "Venus venus aur!",
     generation: 1,
     type: "Grass/Poison",
@@ -45,7 +45,7 @@ const pokemonData = [
   {
     id: 150,
     name: "Mewtwo",
-    image: "/placeholder.svg?height=128&width=128&text=Mewtwo",
+    image: "https://wiki.leagueoflegends.com/en-us/images/thumb/Gragas_Render.png/354px-Gragas_Render.png?72089",
     cry: "Mew mew two!",
     generation: 1,
     type: "Psychic",
@@ -54,7 +54,7 @@ const pokemonData = [
   {
     id: 144,
     name: "Articuno",
-    image: "/placeholder.svg?height=128&width=128&text=Articuno",
+    image: "https://wiki.leagueoflegends.com/en-us/images/thumb/Gragas_Render.png/354px-Gragas_Render.png?72089",
     cry: "Arti arti cuno!",
     generation: 1,
     type: "Ice/Flying",

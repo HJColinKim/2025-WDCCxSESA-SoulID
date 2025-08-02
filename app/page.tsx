@@ -41,7 +41,7 @@ const pokemonData = [
   {
     id: 150,
     name: "sonic",
-    image: "/images/Sonic8bit.jpg",
+    image: "/images/Sonic_black.png",
 
     audio: "/audio/sonicaudio.mp3",
     crushMultiplier: 0.65, // Normal crushing
@@ -258,7 +258,7 @@ function PokemonCoopGame() {
           audioRef.current?.removeEventListener('loadeddata', handleLoadedData);
         };
         audioRef.current.addEventListener('loadeddata', handleLoadedData);
-        
+
         // Additional event listener for loadedmetadata
         const handleLoadedMetadata = () => {
           if (audioRef.current && audioRef.current.duration) {
@@ -309,7 +309,7 @@ function PokemonCoopGame() {
   const startGame = () => {
     playClickSound();
     let availablePokemon = pokemonData;
-    
+
     // Filter out used pokemon if we haven't used all of them yet
     if (usedPokemonIds.length < pokemonData.length) {
       availablePokemon = pokemonData.filter(pokemon => !usedPokemonIds.includes(pokemon.id));
@@ -317,15 +317,15 @@ function PokemonCoopGame() {
       // Reset the used list if all have been used
       setUsedPokemonIds([]);
     }
-    
+
     // If it's the first game, exclude halo from available options
     if (isFirstGame) {
       availablePokemon = availablePokemon.filter(pokemon => pokemon.name !== "halo");
       setIsFirstGame(false);
     }
-    
+
     const randomPokemon = availablePokemon[Math.floor(Math.random() * availablePokemon.length)];
-    
+
     // Add the selected pokemon to the used list
     setUsedPokemonIds(prev => [...prev, randomPokemon.id]);
 
@@ -387,7 +387,7 @@ function PokemonCoopGame() {
   const playAgain = () => {
     playClickSound();
     let availablePokemon = pokemonData;
-    
+
     // Filter out used pokemon if we haven't used all of them yet
     if (usedPokemonIds.length < pokemonData.length) {
       availablePokemon = pokemonData.filter(pokemon => !usedPokemonIds.includes(pokemon.id));
@@ -395,9 +395,9 @@ function PokemonCoopGame() {
       // Reset the used list if all have been used
       setUsedPokemonIds([]);
     }
-    
+
     const randomPokemon = availablePokemon[Math.floor(Math.random() * availablePokemon.length)];
-    
+
     // Add the selected pokemon to the used list
     setUsedPokemonIds(prev => [...prev, randomPokemon.id]);
 
@@ -496,7 +496,7 @@ function PokemonCoopGame() {
       // Force volume refresh before playing
       const quality = getAudioQuality();
       audioRef.current.volume = audioEnabled ? quality.volume : 0;
-      
+
       // Ensure audio is loaded before trying to play
       if (audioRef.current.readyState < 2) {
         console.log("Audio not ready, waiting for load...");

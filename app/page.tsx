@@ -8,7 +8,7 @@ import { Volume2, VolumeX, Minimize2, X, Square, Play, Pause } from "lucide-reac
 const pokemonData = [
   {
     id: 25,
-    name: "Mortal Kombat",
+    name: "mortal kombat",
     image: "/images/MK1SubScorp.jpg",
     audio: "/audio/MkAudio.mp3",
     crushMultiplier: 0.7, // Normal crushing
@@ -195,6 +195,11 @@ export default function PokemonCoopGame() {
   }
 
   const getCurrentImageQuality = () => {
+    // If the game is finished, show the image at its largest size.
+    if (gameState === 'finished') {
+      return 128;
+    }
+
     // Revert to the original 5-step size progression.
     const qualityLevels = [16, 32, 64, 96, 128];
     const level = Math.min(guesses.length, qualityLevels.length - 1);
@@ -202,6 +207,11 @@ export default function PokemonCoopGame() {
   };
 
   const getImageFilter = () => {
+    // If the game is finished, show the image with no filters.
+    if (gameState === 'finished') {
+      return 'none';
+    }
+
     // Start at 40% quality and increase by 15% each time.
     const effectLevel = Math.min(100, 40 + guesses.length * 15);
 
@@ -321,7 +331,7 @@ export default function PokemonCoopGame() {
           {/* Title Bar */}
           <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] mb-4">
             <div className="bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between">
-              <span className="text-sm font-bold">🕹️ Pokémon Co-op Guesser v2.1 - SHAREWARE</span>
+              <span className="text-sm font-bold">🕹️ Nostalgia Co-op Guesser v2.1 - SHAREWARE</span>
               <div className="flex gap-1">
                 <button className="w-4 h-4 bg-[#c0c0c0] border border-black text-black text-xs flex items-center justify-center hover:bg-[#d0d0d0]">
                   <Minimize2 className="w-2 h-2" />

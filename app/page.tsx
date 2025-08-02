@@ -9,7 +9,7 @@ const pokemonData = [
   {
     id: 25,
     name: "Pikachu",
-    image: "/placeholder.svg?height=128&width=128&text=Pikachu",
+    image: "/images/le.jpeg",
     cry: "Pika pika chu!",
     generation: 1,
     type: "Electric",
@@ -18,7 +18,7 @@ const pokemonData = [
   {
     id: 6,
     name: "Charizard",
-    image: "/placeholder.svg?height=128&width=128&text=Charizard",
+    image: "/images/le.jpeg",
     cry: "Char char izard!",
     generation: 1,
     type: "Fire/Flying",
@@ -27,7 +27,7 @@ const pokemonData = [
   {
     id: 9,
     name: "Blastoise",
-    image: "/placeholder.svg?height=128&width=128&text=Blastoise",
+    image: "/images/le.jpeg",
     cry: "Blas blas toise!",
     generation: 1,
     type: "Water",
@@ -36,7 +36,7 @@ const pokemonData = [
   {
     id: 3,
     name: "Venusaur",
-    image: "/placeholder.svg?height=128&width=128&text=Venusaur",
+    image: "/images/le.jpeg",
     cry: "Venus venus aur!",
     generation: 1,
     type: "Grass/Poison",
@@ -45,7 +45,7 @@ const pokemonData = [
   {
     id: 150,
     name: "Mewtwo",
-    image: "/placeholder.svg?height=128&width=128&text=Mewtwo",
+    image: "/images/le.jpeg",
     cry: "Mew mew two!",
     generation: 1,
     type: "Psychic",
@@ -54,7 +54,7 @@ const pokemonData = [
   {
     id: 144,
     name: "Articuno",
-    image: "/placeholder.svg?height=128&width=128&text=Articuno",
+    image: "/images/le.jpeg",
     cry: "Arti arti cuno!",
     generation: 1,
     type: "Ice/Flying",
@@ -185,12 +185,12 @@ export default function PokemonCoopGame() {
 
   const getAudioQuality = () => {
     // Simulate audio quality improvement with bit depth
-    const volume = Math.min(1, 0.3 + guessCount * 0.15)
+    const volume = Math.min(1, 0.15 + guessCount * 0.12) // Lower starting volume
     const clarity = guessCount + 1
-    const filterFrequency = Math.min(22050, 500 + guessCount * 2000); // from 500Hz to 8500Hz
-    const bitDepth = Math.min(16, 4 + guessCount * 2); // from 4-bit to 16-bit
-    const sampleRate = Math.min(44100, 8000 + guessCount * 7200); // from 8kHz to 44.1kHz
-    return { volume, clarity, filterFrequency, bitDepth, sampleRate }
+    const filterFrequency = Math.min(22050, 1200 + guessCount * 3000); // Higher starting frequency
+    const bitDepth = Math.min(16, 3 + guessCount * 2.5); // Start very low for heavy crushing
+    const sampleRateReduction = Math.max(1, 16 - guessCount * 3); // Heavy sample rate reduction at start
+    return { volume, clarity, filterFrequency, bitDepth, sampleRateReduction }
   }
 
   const toggleMute = () => {
@@ -215,21 +215,34 @@ export default function PokemonCoopGame() {
       filter.frequency.value = getAudioQuality().filterFrequency;
       filterRef.current = filter;
 
-      // Create bit crusher for bit depth reduction
+      // Create bit crusher for bit depth and sample rate reduction
       const bitCrusher = audioContext.createScriptProcessor(4096, 1, 1);
       bitCrusherRef.current = bitCrusher;
+
+      let sampleCounter = 0;
+      let lastCrushedSample = 0;
 
       bitCrusher.onaudioprocess = (event) => {
         const input = event.inputBuffer.getChannelData(0);
         const output = event.outputBuffer.getChannelData(0);
-        // Get current bit depth dynamically using the ref
-        const currentBitDepth = Math.min(16, 4 + guessCountRef.current * 2);
+
+        // Get current quality settings using the ref for stable values
+        const currentBitDepth = Math.min(16, 3 + guessCountRef.current * 2.5);
+        const currentSampleReduction = Math.max(1, 16 - guessCountRef.current * 3);
+
         const levels = Math.pow(2, currentBitDepth);
 
         for (let i = 0; i < input.length; i++) {
-          // Quantize the audio to simulate lower bit depth
-          const quantized = Math.round(input[i] * levels) / levels;
-          output[i] = quantized;
+          // Sample rate reduction: only update the output every N samples
+          if (sampleCounter % Math.floor(currentSampleReduction) === 0) {
+            // Bit depth reduction: quantize the audio to simulate lower bit depth
+            const quantized = Math.round(input[i] * levels) / levels;
+            // Add slight overdrive for more crushing effect
+            lastCrushedSample = Math.tanh(quantized * 1.5);
+          }
+
+          output[i] = lastCrushedSample;
+          sampleCounter++;
         }
       };
 
@@ -545,13 +558,13 @@ export default function PokemonCoopGame() {
                         <div className="animate-pulse">
                           🎵 "{currentPokemon.cry}"
                           <br />
-                          <span className="text-xs">(Quality: {getAudioQuality().bitDepth}-bit/{Math.round(getAudioQuality().sampleRate / 1000)}kHz)</span>
+                          <span className="text-xs">(Bit Depth: {getAudioQuality().bitDepth.toFixed(1)}-bit | Crush: {getAudioQuality().sampleRateReduction.toFixed(1)}x)</span>
                         </div>
                       ) : (
                         <div>Click play to hear audio hint</div>
                       )}
                     </div>
-                    <div className="text-green-400 text-xs">Bit Depth: {getAudioQuality().bitDepth}-bit | Sample Rate: {Math.round(getAudioQuality().sampleRate / 1000)}kHz</div>
+                    <div className="text-green-400 text-xs">Bit Crusher: {getAudioQuality().bitDepth.toFixed(1)}-bit | Sample Reduction: {getAudioQuality().sampleRateReduction.toFixed(1)}x</div>
                   </div>
                 </div>
               </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Volume2, VolumeX, Minimize2, X, Square, Play, Pause } from "lucide-react"
+import { AdProvider, useAdManager } from "./adsManager"
 
 // Mock Pokémon dataset with audio simulation
 const pokemonData = [
@@ -56,14 +57,13 @@ const pokemonData = [
   },
 ]
 
-export default function PokemonCoopGame() {
+function PokemonCoopGame() {
   const [gameState, setGameState] = useState<"menu" | "playing" | "finished">("menu")
   const [currentPokemon, setCurrentPokemon] = useState(pokemonData[0])
   const [guesses, setGuesses] = useState<string[]>([])
   const [currentGuess, setCurrentGuess] = useState("")
   const [guessCount, setGuessCount] = useState(0)
   const [showWinRARPopup, setShowWinRARPopup] = useState(false)
-  const [showAdPopup, setShowAdPopup] = useState(false)
   const [audioPlaying, setAudioPlaying] = useState(false)
   const [audioEnabled, setAudioEnabled] = useState(true)
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -73,6 +73,8 @@ export default function PokemonCoopGame() {
   const bitCrusherRef = useRef<AudioWorkletNode | null>(null);
   const guessCountRef = useRef(0);
   const gameLogRef = useRef<HTMLDivElement>(null);
+
+  const { showAdPopup } = useAdManager();
   const clickAudioRef = useRef<HTMLAudioElement>(null);
   const errorAudioRef = useRef<HTMLAudioElement>(null);
 
@@ -164,21 +166,15 @@ export default function PokemonCoopGame() {
   }, []);
 
   useEffect(() => {
-    // Show WinRAR popup after 5 seconds
-    const winrarTimer = setTimeout(() => {
-      setShowWinRARPopup(true)
-    }, 5000)
-
-    // Show ad popup after 15 seconds
-    const adTimer = setTimeout(() => {
-      setShowAdPopup(true)
-    }, 15000)
+    const adTimer = setInterval(() => {
+      // You can call this from anywhere now!
+      showAdPopup();   //Disable this line for accessibility mode 
+    }, 1000); // Trigger a random ad every 15 seconds
 
     return () => {
-      clearTimeout(winrarTimer)
-      clearTimeout(adTimer)
-    }
-  }, [])
+      clearInterval(adTimer);
+    };
+  }, [showAdPopup]);
 
   const startGame = () => {
     playClickSound();
@@ -525,7 +521,7 @@ export default function PokemonCoopGame() {
 
         {/* WinRAR Popup */}
         {showWinRARPopup && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-96">
               <div className="bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between">
                 <span className="text-sm font-bold">WinRAR</span>
@@ -559,44 +555,6 @@ export default function PokemonCoopGame() {
                     className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-4 py-1 text-sm hover:bg-[#d0d0d0]"
                   >
                     Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Ad Popup */}
-        {showAdPopup && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-80">
-              <div className="bg-gradient-to-r from-[#ff0000] to-[#800000] text-white px-2 py-1 flex items-center justify-between">
-                <span className="text-sm font-bold">🎯 SPECIAL OFFER!</span>
-                <button
-                  onClick={() => setShowAdPopup(false)}
-                  className="w-4 h-4 bg-[#c0c0c0] border border-black text-black text-xs flex items-center justify-center hover:bg-[#d0d0d0]"
-                >
-                  <X className="w-2 h-2" />
-                </button>
-              </div>
-              <div className="p-4 text-center">
-                <div className="bg-yellow-300 border-2 border-black p-3 mb-3">
-                  <div className="text-lg font-bold">FREE CD-ROM!</div>
-                  <div className="text-sm">1000+ Games Collection</div>
-                  <div className="text-xs">Just pay $4.99 shipping</div>
-                </div>
-                <div className="flex gap-2 justify-center">
-                  <button
-                    onClick={() => setShowAdPopup(false)}
-                    className="bg-green-500 text-white border-2 border-black px-3 py-1 text-sm hover:bg-green-600"
-                  >
-                    YES! Send me CD
-                  </button>
-                  <button
-                    onClick={() => setShowAdPopup(false)}
-                    className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-3 py-1 text-sm hover:bg-[#d0d0d0]"
-                  >
-                    No thanks
                   </button>
                 </div>
               </div>
@@ -848,5 +806,13 @@ export default function PokemonCoopGame() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function WrappedGame() {
+  return (
+    <AdProvider>
+      <PokemonCoopGame />
+    </AdProvider>
   )
 }

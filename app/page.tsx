@@ -552,7 +552,9 @@ export default function PokemonCoopGame() {
                   <div className="text-green-400 text-xs mt-2">
                     Resolution: {getCurrentImageQuality()}x{getCurrentImageQuality()}px
                   </div>
-                  <div className="text-green-400 text-xs">Quality: {Math.min(100, 20 + guessCount * 20)}%</div>
+                  <div className="text-green-400 text-xs">
+  Quality: {gameState === 'finished' ? 100 : Math.min(100, 40 + guessCount * 15)}%
+</div>
                 </div>
 
                 {/* Audio Display */}

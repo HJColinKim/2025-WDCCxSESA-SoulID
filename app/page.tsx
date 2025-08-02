@@ -11,48 +11,48 @@ const pokemonData = [
     name: "mortal kombat",
     image: "/images/MK1SubScorp.jpg",
     audio: "/audio/MkAudio.mp3",
+    crushMultiplier: 0.7, // Normal crushing
   },
   {
     id: 6,
     name: "pacman",
-    image: "/images/pacman.png",
+    image: "/images/pacman.jpeg",
     audio: "/audio/PacMan.mp3",
+    crushMultiplier: 1.3, // Less crushing (audio plays better on first round)
+    volumeMultiplier: 0.1, // Normal volume
   },
   {
     id: 9,
     name: "crash bandicoot",
     image: "/images/Crash.png",
-    cry: "Blas blas toise!",
-    generation: 1,
-    type: "Water",
+
     audio: "/audio/crash.mp3",
+    crushMultiplier: 0.7, // More crushing
   },
   {
     id: 3,
     name: "mario",
     image: "/images/Mario.jpg",
-    cry: "Venus venus aur!",
-    generation: 1,
-    type: "Grass/Poison",
+
     audio: "/audio/mario.mp3",
+    crushMultiplier: 0.85, // Less crushing
   },
   {
     id: 150,
     name: "sonic",
     image: "/images/Sonic8bit.jpg",
-    cry: "Mew mew two!",
-    generation: 1,
-    type: "Psychic",
+
     audio: "/audio/sonicaudio.mp3",
+    crushMultiplier: 0.65, // Normal crushing
   },
   {
     id: 144,
     name: "wii sports",
     image: "/images/Wiisportstennis.jpg",
-    cry: "Arti arti cuno!",
-    generation: 1,
-    type: "Ice/Flying",
-    audio: "/audio/wiiaudio.mp3 ",
+
+    audio: "/audio/wiiaudio.mp3",
+    crushMultiplier: 0.45, // Much less crushing (if audio is very quiet)
+    volumeMultiplier: 1.4, // Normal volume
   },
 ]
 
@@ -136,6 +136,15 @@ export default function PokemonCoopGame() {
 
     console.log("Selected subject data:")
 
+    // Reset audio context for new game
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    sourceRef.current = null;
+    filterRef.current = null;
+    bitCrusherRef.current = null;
+
     //Simple random algorithm for choosing which 'subject' to choose. Should be kept random but could utilize elo system to make popular ones pop up first 
     setCurrentPokemon(randomPokemon)
     setGameState("playing")
@@ -174,6 +183,15 @@ export default function PokemonCoopGame() {
     guessCountRef.current = 0;
     setCurrentGuess("")
     setAudioPlaying(false)
+
+    // Reset audio context and processing nodes
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    sourceRef.current = null;
+    filterRef.current = null;
+    bitCrusherRef.current = null;
   }
 
   const getCurrentImageQuality = () => {
@@ -183,10 +201,10 @@ export default function PokemonCoopGame() {
     }
 
     // Revert to the original 5-step size progression.
-    const qualityLevels = [16, 32, 64, 96, 128]; 
+    const qualityLevels = [16, 32, 64, 96, 128];
     const level = Math.min(guesses.length, qualityLevels.length - 1);
     return qualityLevels[level];
-  };  
+  };
 
   const getImageFilter = () => {
     // If the game is finished, show the image with no filters.
@@ -199,17 +217,21 @@ export default function PokemonCoopGame() {
 
     // Start with 8px of blur and reduce it by 2px each time.
     const blur = Math.max(0, 8 - guesses.length * 2);
-    
+
     return `blur(${blur}px) contrast(${effectLevel}%) brightness(${effectLevel}%) saturate(${effectLevel}%)`;
   };
 
   const getAudioQuality = () => {
+    // Apply crush multiplier from current pokemon data
+    const crushMultiplier = currentPokemon.crushMultiplier || 1.0;
+    const volumeMultiplier = currentPokemon.volumeMultiplier || 1.0;
+
     // Slower improvement progression to make rounds more challenging
-    const volume = Math.min(1, 0.18 + guessCount * 0.07) // Slower volume increase
+    const volume = Math.min(1, 0.18 + guessCount * 0.07 * volumeMultiplier) // Slower volume increase
     const clarity = guessCount + 1
     const filterFrequency = Math.min(22050, 1200 + guessCount * 2200); // Smaller frequency jumps
-    const bitDepth = Math.min(16, 3.5 + guessCount * 1.8); // Slower bit depth improvement
-    const sampleRateReduction = Math.max(1, 11 - guessCount * 1.4); // Slower crushing reduction
+    const bitDepth = Math.min(16, (3.5 + guessCount * 1.8) / crushMultiplier); // Apply multiplier to bit depth
+    const sampleRateReduction = Math.max(1, (11 - guessCount * 1.4) * crushMultiplier); // Apply multiplier to sample reduction
     return { volume, clarity, filterFrequency, bitDepth, sampleRateReduction }
   }
 
@@ -246,9 +268,10 @@ export default function PokemonCoopGame() {
         const input = event.inputBuffer.getChannelData(0);
         const output = event.outputBuffer.getChannelData(0);
 
-        // Get current quality settings using the ref for stable values
-        const currentBitDepth = Math.min(16, 3.5 + guessCountRef.current * 1.8);
-        const currentSampleReduction = Math.max(1, 11 - guessCountRef.current * 1.4);
+        // Get current quality settings using the ref for stable values and apply crush multiplier
+        const crushMultiplier = currentPokemon.crushMultiplier || 1.0;
+        const currentBitDepth = Math.min(16, (3.5 + guessCountRef.current * 1.8) / crushMultiplier);
+        const currentSampleReduction = Math.max(1, (11 - guessCountRef.current * 1.4) * crushMultiplier);
 
         const levels = Math.pow(2, currentBitDepth);
 
@@ -398,7 +421,7 @@ export default function PokemonCoopGame() {
               </div>
 
               {/* Stats Window */}
-              <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-3">
+              <div className="bg-[#c0c0c0] border-2 border-t-white border-l-[#808080] border-r-[#808080] border-b-[#808080] p-3">
                 <div className="bg-gradient-to-r from-[#008080] to-[#004040] text-white px-2 py-1 mb-2">
                   <span className="text-xs font-bold">📊 GAME STATS</span>
                 </div>

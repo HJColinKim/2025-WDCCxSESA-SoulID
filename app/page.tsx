@@ -73,6 +73,7 @@ function PokemonCoopGame() {
   const imageRef = useRef<HTMLImageElement>(null);
   const [audioDuration, setAudioDuration] = useState(0);
   const [isFirstGame, setIsFirstGame] = useState(true);
+  const [usedPokemonIds, setUsedPokemonIds] = useState<number[]>([]);
 
   const { showAdPopup } = useAdManager();
   const clickAudioRef = useRef<HTMLAudioElement>(null);
@@ -303,17 +304,26 @@ function PokemonCoopGame() {
 
   const startGame = () => {
     playClickSound();
-    let randomPokemon;
+    let availablePokemon = pokemonData;
     
-    if (isFirstGame) {
-      // For the first game, exclude halo from the selection
-      const nonHaloPokemon = pokemonData.filter(pokemon => pokemon.name !== "halo");
-      randomPokemon = nonHaloPokemon[Math.floor(Math.random() * nonHaloPokemon.length)];
-      setIsFirstGame(false);
+    // Filter out used pokemon if we haven't used all of them yet
+    if (usedPokemonIds.length < pokemonData.length) {
+      availablePokemon = pokemonData.filter(pokemon => !usedPokemonIds.includes(pokemon.id));
     } else {
-      // For subsequent games, allow any pokemon including halo
-      randomPokemon = pokemonData[Math.floor(Math.random() * pokemonData.length)];
+      // Reset the used list if all have been used
+      setUsedPokemonIds([]);
     }
+    
+    // If it's the first game, exclude halo from available options
+    if (isFirstGame) {
+      availablePokemon = availablePokemon.filter(pokemon => pokemon.name !== "halo");
+      setIsFirstGame(false);
+    }
+    
+    const randomPokemon = availablePokemon[Math.floor(Math.random() * availablePokemon.length)];
+    
+    // Add the selected pokemon to the used list
+    setUsedPokemonIds(prev => [...prev, randomPokemon.id]);
 
     console.log("Selected subject data:")
 
@@ -372,7 +382,20 @@ function PokemonCoopGame() {
 
   const playAgain = () => {
     playClickSound();
-    const randomPokemon = pokemonData[Math.floor(Math.random() * pokemonData.length)]
+    let availablePokemon = pokemonData;
+    
+    // Filter out used pokemon if we haven't used all of them yet
+    if (usedPokemonIds.length < pokemonData.length) {
+      availablePokemon = pokemonData.filter(pokemon => !usedPokemonIds.includes(pokemon.id));
+    } else {
+      // Reset the used list if all have been used
+      setUsedPokemonIds([]);
+    }
+    
+    const randomPokemon = availablePokemon[Math.floor(Math.random() * availablePokemon.length)];
+    
+    // Add the selected pokemon to the used list
+    setUsedPokemonIds(prev => [...prev, randomPokemon.id]);
 
     // Reset audio state first
     setAudioPlaying(false)

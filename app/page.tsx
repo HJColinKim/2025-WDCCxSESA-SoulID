@@ -27,7 +27,7 @@ const pokemonData = [
     name: "crash bandicoot",
     image: "/images/Crash.png",
 
-    audio: "/audio/crash.mp3",
+    audio: "/audio/crash3.mp3",
     crushMultiplier: 0.7, // More crushing
   },
   {
@@ -463,7 +463,7 @@ function PokemonCoopGame() {
     const calculatedDuration = segmentDuration * (guessCount + 1);
     
     // For very short audio files, ensure minimum playback time
-    const minPlaybackTime = Math.min(0.5, maxDuration); // At least 1 second or full duration if shorter
+    const minPlaybackTime = Math.min(0.3, maxDuration); // At least 1 second or full duration if shorter
     const allowedDuration = Math.max(minPlaybackTime, Math.min(maxDuration, calculatedDuration));
     
     console.log(`Audio Quality Debug - guessCount: ${guessCount}, maxDuration: ${maxDuration}, segmentDuration: ${segmentDuration}, calculatedDuration: ${calculatedDuration}, allowedDuration: ${allowedDuration}`);

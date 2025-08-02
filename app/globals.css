@@ -121,7 +121,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    cursor: url('/images/cursor.png') 16 16, auto;
+    cursor: url('/images/cursor.png') 16 16, auto !important;
   }
 }
 

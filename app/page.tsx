@@ -308,7 +308,7 @@ export default function PokemonCoopGame() {
           {/* Title Bar */}
           <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] mb-4">
             <div className="bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between">
-              <span className="text-sm font-bold">🕹️ Pokémon Co-op Guesser v2.1 - SHAREWARE</span>
+              <span className="text-sm font-bold">🕹️ Nostalgia Co-op Guesser v2.1 - SHAREWARE</span>
               <div className="flex gap-1">
                 <button className="w-4 h-4 bg-[#c0c0c0] border border-black text-black text-xs flex items-center justify-center hover:bg-[#d0d0d0]">
                   <Minimize2 className="w-2 h-2" />

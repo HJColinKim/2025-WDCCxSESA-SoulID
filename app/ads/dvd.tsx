@@ -87,6 +87,7 @@ const BouncingDVDLogo = () => {
         border: '2px solid white',
         userSelect: 'none', // Prevent text selection
         fontFamily: 'monospace',
+        zIndex: 9999, // Add a high z-index to ensure it's on top
       }}
     >
       DVD
@@ -94,21 +95,4 @@ const BouncingDVDLogo = () => {
   );
 };
 
-
-// --- Main App Component ---
-// This is an example of how you would use the BouncingDVDLogo component.
-const App = () => {
-  return (
-    <div style={{
-      width: '100vw',
-      height: '100vh',
-      backgroundColor: '#333',
-      overflow: 'hidden' // Hide scrollbars
-    }}>
-      {/* You can just drop the component anywhere in your app */}
-      <BouncingDVDLogo />
-    </div>
-  );
-};
-
-export default App;
+export default BouncingDVDLogo;

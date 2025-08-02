@@ -3,7 +3,7 @@ import { useState, createContext, useContext, FC, ReactNode } from 'react';
 import WinRARPopup from './ads/winrar';
 import NormalAdPopup from './ads/cd';
 import ExplodeAdPopup from './ads/explode';
-import NigerianPrincePopup from './ads/crazy'; 
+import NigerianPrincePopup from './ads/crazy';
 import { AdType } from './types';
 
 

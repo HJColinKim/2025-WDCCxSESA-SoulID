@@ -918,6 +918,31 @@ function PokemonCoopGame() {
                 </button>
               </div>
             </div>
+
+
+                  {/* NEW WINDOWS 95 AD GOES HERE */}
+<div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] p-3">
+  <div className="bg-gradient-to-r from-[#008080] to-[#004040] text-white px-2 py-1 mb-2">
+    <span className="text-xs font-bold">💾 UPGRADE NOW!</span>
+  </div>
+  <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-2 flex gap-2 items-center">
+    <img 
+      src="/images/windows95.jpg" 
+      alt="Windows 95 Box Art"
+      className="w-20 h-20"
+      onError={(e) => { e.currentTarget.src = 'https://placehold.co/80x80/000000/FFFFFF?text=Win95'; }}
+    />
+    <div className="text-xs text-black text-left flex-1">
+      <div className="font-bold">Windows 95</div>
+      <div>Purchase a physical copy of the brand new Windows 95, and experience the future!</div>
+      <div className="font-bold mt-1">Only $89.99!</div>
+      <button className="bg-blue-600 text-white px-2 py-1 text-xs mt-2 border border-black hover:bg-blue-700">
+        ORDER NOW
+      </button>
+    </div>
+  </div>
+</div>
+
           </div>
         </div>
       </div>

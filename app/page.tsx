@@ -35,7 +35,7 @@ const pokemonData = [
     name: "mario",
     image: "/images/Mario.jpg",
 
-    audio: "/audio/mario.mp3",
+    audio: "/audio/mario2.mp3",
     crushMultiplier: 0.85, // Less crushing
   },
   {
@@ -471,7 +471,7 @@ function PokemonCoopGame() {
     const calculatedDuration = segmentDuration * (guessCount + 1);
 
     // For very short audio files, ensure minimum playback time
-    const minPlaybackTime = Math.min(0.3, maxDuration); // At least 1 second or full duration if shorter
+    const minPlaybackTime = Math.min(0.2, maxDuration); // At least 1 second or full duration if shorter
     const allowedDuration = Math.max(minPlaybackTime, Math.min(maxDuration, calculatedDuration));
 
     console.log(`Audio Quality Debug - guessCount: ${guessCount}, maxDuration: ${maxDuration}, segmentDuration: ${segmentDuration}, calculatedDuration: ${calculatedDuration}, allowedDuration: ${allowedDuration}`);

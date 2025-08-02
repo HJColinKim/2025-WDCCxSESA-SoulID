@@ -13,7 +13,7 @@ const pokemonData = [
     cry: "Pika pika chu!",
     generation: 1,
     type: "Electric",
-    audio: "/audio/pikachu.mp3",
+    audio: "/audio/example.mp3",
   },
   {
     id: 6,
@@ -22,7 +22,7 @@ const pokemonData = [
     cry: "Char char izard!",
     generation: 1,
     type: "Fire/Flying",
-    audio: "/audio/pikachu.mp3",
+    audio: "/audio/example.mp3",
   },
   {
     id: 9,
@@ -31,7 +31,7 @@ const pokemonData = [
     cry: "Blas blas toise!",
     generation: 1,
     type: "Water",
-    audio: "/audio/pikachu.mp3",
+    audio: "/audio/example.mp3",
   },
   {
     id: 3,
@@ -40,7 +40,7 @@ const pokemonData = [
     cry: "Venus venus aur!",
     generation: 1,
     type: "Grass/Poison",
-    audio: "/audio/pikachu.mp3",
+    audio: "/audio/example.mp3",
   },
   {
     id: 150,
@@ -49,7 +49,7 @@ const pokemonData = [
     cry: "Mew mew two!",
     generation: 1,
     type: "Psychic",
-    audio: "/audio/pikachu.mp3",
+    audio: "/audio/example.mp3",
   },
   {
     id: 144,
@@ -58,7 +58,7 @@ const pokemonData = [
     cry: "Arti arti cuno!",
     generation: 1,
     type: "Ice/Flying",
-    audio: "/audio/pikachu.mp3",
+    audio: "/audio/example.mp3",
   },
 ]
 
@@ -73,9 +73,47 @@ export default function PokemonCoopGame() {
   const [audioPlaying, setAudioPlaying] = useState(false)
   const [audioEnabled, setAudioEnabled] = useState(true)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const filterRef = useRef<BiquadFilterNode | null>(null);
+  const bitCrusherRef = useRef<ScriptProcessorNode | null>(null);
 
   const maxGuesses = 5
   const qualityLevels = [16, 32, 64, 96, 128]
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.src = currentPokemon.audio;
+      audioRef.current.volume = getAudioQuality().volume;
+      if (filterRef.current) {
+        filterRef.current.frequency.value = getAudioQuality().filterFrequency;
+      }
+      // Bit crusher effect is updated in real-time via the onaudioprocess callback
+      if (audioPlaying) {
+        audioRef.current.play();
+      }
+    }
+  }, [currentPokemon, audioPlaying, guessCount]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    const handlePlay = () => setAudioPlaying(true);
+    const handlePause = () => setAudioPlaying(false);
+
+    if (audio) {
+      audio.addEventListener('play', handlePlay);
+      audio.addEventListener('pause', handlePause);
+      audio.addEventListener('ended', handlePause);
+    }
+
+    return () => {
+      if (audio) {
+        audio.removeEventListener('play', handlePlay);
+        audio.removeEventListener('pause', handlePause);
+        audio.removeEventListener('ended', handlePause);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     // Show WinRAR popup after 5 seconds
@@ -141,16 +179,63 @@ export default function PokemonCoopGame() {
   }
 
   const getAudioQuality = () => {
-    // Simulate audio quality improvement
+    // Simulate audio quality improvement with bit depth
     const volume = Math.min(1, 0.3 + guessCount * 0.15)
     const clarity = guessCount + 1
-    return { volume, clarity }
+    const filterFrequency = Math.min(22050, 500 + guessCount * 2000); // from 500Hz to 8500Hz
+    const bitDepth = Math.min(16, 4 + guessCount * 2); // from 4-bit to 16-bit
+    const sampleRate = Math.min(44100, 8000 + guessCount * 7200); // from 8kHz to 44.1kHz
+    return { volume, clarity, filterFrequency, bitDepth, sampleRate }
   }
 
   const playAudio = () => {
-    setAudioPlaying(!audioPlaying)
-    // In a real implementation, this would play actual audio files
-    // For demo purposes, we'll just show the cry text with effects
+    if (!audioContextRef.current) {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = audioContext;
+      const source = audioContext.createMediaElementSource(audioRef.current!);
+      sourceRef.current = source;
+
+      // Create low-pass filter
+      const filter = audioContext.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = getAudioQuality().filterFrequency;
+      filterRef.current = filter;
+
+      // Create bit crusher for bit depth reduction
+      const bitCrusher = audioContext.createScriptProcessor(4096, 1, 1);
+      bitCrusherRef.current = bitCrusher;
+
+      bitCrusher.onaudioprocess = (event) => {
+        const input = event.inputBuffer.getChannelData(0);
+        const output = event.outputBuffer.getChannelData(0);
+        const bitDepth = getAudioQuality().bitDepth;
+        const levels = Math.pow(2, bitDepth);
+
+        for (let i = 0; i < input.length; i++) {
+          // Quantize the audio to simulate lower bit depth
+          const quantized = Math.round(input[i] * levels) / levels;
+          output[i] = quantized;
+        }
+      };
+
+      // Connect the audio chain: source -> filter -> bitCrusher -> destination
+      source.connect(filter);
+      filter.connect(bitCrusher);
+      bitCrusher.connect(audioContext.destination);
+    }
+
+    // Update filter frequency and bit depth when playing
+    if (filterRef.current) {
+      filterRef.current.frequency.value = getAudioQuality().filterFrequency;
+    }
+
+    if (audioRef.current) {
+      if (audioRef.current.paused) {
+        audioRef.current.play();
+      } else {
+        audioRef.current.pause();
+      }
+    }
   }
 
   if (gameState === "menu") {
@@ -362,6 +447,7 @@ export default function PokemonCoopGame() {
 
   return (
     <div className="min-h-screen bg-[#c0c0c0] p-4 font-mono">
+      <audio ref={audioRef} />
       <div className="mx-auto max-w-6xl">
         {/* Title Bar */}
         <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] mb-4">
@@ -439,13 +525,13 @@ export default function PokemonCoopGame() {
                         <div className="animate-pulse">
                           🎵 "{currentPokemon.cry}"
                           <br />
-                          <span className="text-xs">(Quality: {getAudioQuality().clarity}/5)</span>
+                          <span className="text-xs">(Quality: {getAudioQuality().bitDepth}-bit/{Math.round(getAudioQuality().sampleRate / 1000)}kHz)</span>
                         </div>
                       ) : (
                         <div>Click play to hear audio hint</div>
                       )}
                     </div>
-                    <div className="text-green-400 text-xs">Bitrate: {8 + guessCount * 16}kbps</div>
+                    <div className="text-green-400 text-xs">Bit Depth: {getAudioQuality().bitDepth}-bit | Sample Rate: {Math.round(getAudioQuality().sampleRate / 1000)}kHz</div>
                   </div>
                 </div>
               </div>

@@ -73,6 +73,8 @@ function PokemonCoopGame() {
   const bitCrusherRef = useRef<AudioWorkletNode | null>(null);
   const guessCountRef = useRef(0);
   const gameLogRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   const { showAdPopup } = useAdManager();
   const clickAudioRef = useRef<HTMLAudioElement>(null);
@@ -103,6 +105,92 @@ function PokemonCoopGame() {
       });
     }
   };
+
+  const pixelateCanvas = (canvas: HTMLCanvasElement, pixelSize: number) => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    // Apply pixelation by averaging pixels in blocks
+    for (let y = 0; y < canvas.height; y += pixelSize) {
+      for (let x = 0; x < canvas.width; x += pixelSize) {
+        // Calculate average color for this pixel block
+        let r = 0, g = 0, b = 0, a = 0;
+        let count = 0;
+
+        for (let dy = 0; dy < pixelSize && y + dy < canvas.height; dy++) {
+          for (let dx = 0; dx < pixelSize && x + dx < canvas.width; dx++) {
+            const index = ((y + dy) * canvas.width + (x + dx)) * 4;
+            r += data[index];
+            g += data[index + 1];
+            b += data[index + 2];
+            a += data[index + 3];
+            count++;
+          }
+        }
+
+        // Average the colors
+        r = Math.floor(r / count);
+        g = Math.floor(g / count);
+        b = Math.floor(b / count);
+        a = Math.floor(a / count);
+
+        // Apply the averaged color to the entire block
+        for (let dy = 0; dy < pixelSize && y + dy < canvas.height; dy++) {
+          for (let dx = 0; dx < pixelSize && x + dx < canvas.width; dx++) {
+            const index = ((y + dy) * canvas.width + (x + dx)) * 4;
+            data[index] = r;
+            data[index + 1] = g;
+            data[index + 2] = b;
+            data[index + 3] = a;
+          }
+        }
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+  };
+
+  const applyPixelationEffect = () => {
+    if (!canvasRef.current || !imageRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size
+    canvas.width = 256;
+    canvas.height = 256;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw the original image
+    ctx.drawImage(imageRef.current, 0, 0, canvas.width, canvas.height);
+
+    if (gameState !== 'finished') {
+      // Get the pixelation level based on guesses - more dramatic progression
+      const pixelSize = Math.max(1, 40 - guesses.length * 10);
+
+      // Apply pixelation effect
+      pixelateCanvas(canvas, pixelSize);
+
+      // Apply color filters
+      const effectLevel = Math.min(100, 60 + guesses.length * 10) / 100;
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = `rgba(${255 * effectLevel}, ${255 * effectLevel}, ${255 * effectLevel}, 1)`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  };
+
+  useEffect(() => {
+    if (gameState === 'playing' || gameState === 'finished') {
+      applyPixelationEffect();
+    }
+  }, [guesses.length, gameState, currentPokemon]);
 
   useEffect(() => {
     // Update the ref whenever guessCount changes
@@ -621,26 +709,26 @@ function PokemonCoopGame() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Image Display */}
                 <div className="bg-black border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-4 flex items-center justify-center">
-                  <div
-                    className="relative overflow-hidden"
-                    style={{ width: '256px', height: '256px' }}
-                  >
+                  <div className="relative" style={{ width: '256px', height: '256px' }}>
+                    {/* Hidden image for loading */}
                     <img
+                      ref={imageRef}
                       src={currentPokemon.image || "/placeholder.svg"}
-                      alt="Mystery Pokémon"
-                      className="pixelated"
+                      alt="Mystery Image"
+                      style={{ display: 'none' }}
+                      onLoad={applyPixelationEffect}
+                      crossOrigin="anonymous"
+                    />
+                    {/* Canvas for pixelated display */}
+                    <canvas
+                      ref={canvasRef}
+                      width={256}
+                      height={256}
                       style={{
-                        imageRendering: "pixelated",
-                        filter: getImageFilter(),
-                        width: `${getCurrentImageQuality()}px`,
-                        height: `${getCurrentImageQuality()}px`,
-                        // Scale the low-res image to fill the container
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%) scale(var(--scale-factor, 1))',
-                        '--scale-factor': 256 / getCurrentImageQuality(),
-                      } as React.CSSProperties}
+                        width: '256px',
+                        height: '256px',
+                        imageRendering: 'pixelated',
+                      }}
                     />
                   </div>
                 </div>

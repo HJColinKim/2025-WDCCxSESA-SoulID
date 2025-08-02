@@ -1,2 +1,2 @@
 // types.ts
-export type AdType = 'winrar' | 'normal' | 'explode' | 'crazy' | 'socialcredits' | 'dvd' | 'gpu';
+export type AdType = 'winrar' | 'normal' | 'explode' | 'crazy' | 'socialcredits' | 'dvd' | 'gpu' | 'approach';

@@ -7,6 +7,7 @@ import NigerianPrincePopup from './ads/crazy';
 import SocialCreditsPopupProps from './ads/socialcredits'; 
 import BouncingDVDLogo from './ads/dvd';
 import DownloadGpuPopupProps from './ads/gpu';
+import ApproachingThreatPopupProps from './ads/approach'; 
 import { AdType } from './types';
 
 
@@ -25,7 +26,7 @@ const AdManagerContext = createContext<AdManagerContextType | undefined>(undefin
 export const AdProvider: FC<{ children: ReactNode }> = ({ children }) => {
   // 1. State is now an array of ad instances, not a single ad
   const [activeAds, setActiveAds] = useState<AdInstance[]>([]);
-  const adOptions: AdType[] = ['winrar', 'normal', 'explode', 'crazy', 'socialcredits', 'dvd', 'gpu'];
+  const adOptions: AdType[] = ['winrar', 'normal', 'explode', 'crazy', 'socialcredits', 'dvd', 'gpu', 'approach'];
 
   const showAdPopup = () => {
     const newAd: AdInstance = {
@@ -69,6 +70,10 @@ export const AdProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
         if (ad.type === 'gpu'){
           return < DownloadGpuPopupProps key={ad.id} onClose={() => closeAdPopup(ad.id)} />;
+        }
+
+        if (ad.type === 'approach'){
+          return < ApproachingThreatPopupProps key={ad.id} onClose={() => closeAdPopup(ad.id)} />;
         }
 
         return null;

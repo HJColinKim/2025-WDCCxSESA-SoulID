@@ -138,6 +138,10 @@ export default function PokemonCoopGame() {
 
   const startGame = () => {
     const randomPokemon = pokemonData[Math.floor(Math.random() * pokemonData.length)]
+
+    console.log("Selected subject data:")
+
+    //Simple random algorithm for choosing which 'subject' to choose. Should be kept random but could utilize elo system to make popular ones pop up first 
     setCurrentPokemon(randomPokemon)
     setGameState("playing")
     setGuesses([])

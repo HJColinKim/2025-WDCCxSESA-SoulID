@@ -9,8 +9,8 @@ const BouncingDVDLogo = () => {
   const [direction, setDirection] = useState({ dx: 1, dy: 1 });
   // Ref to hold the animation frame request
   const animationFrameRef = useRef<number | null>(null);
-  // Ref to the bouncing element itself to get its dimensions
-  const logoRef = useRef<HTMLDivElement>(null);
+  // Ref to the bouncing element, updated to be an image element
+  const logoRef = useRef<HTMLImageElement | null>(null);
   // Speed of the bouncing logo (pixels per frame)
   const speed = 2;
 
@@ -73,42 +73,21 @@ const BouncingDVDLogo = () => {
   }, [direction, speed]); // Rerun effect if direction or speed changes
 
   return (
-    <div
+    <img
       ref={logoRef}
+      src="/images/dvd_logo.png" // Path from the public directory
+      alt="Bouncing DVD Logo"
       style={{
         position: 'fixed',
         top: `${position.y}px`,
         left: `${position.x}px`,
-        color: 'white',
-        backgroundColor: 'black',
-        padding: '5px 10px',
-        fontWeight: 'bold',
-        fontSize: '24px',
-        border: '2px solid white',
-        userSelect: 'none', // Prevent text selection
-        fontFamily: 'monospace',
+        width: '150px', // Example width, adjust as needed
+        height: 'auto',
+        userSelect: 'none',
+        zIndex: 9999,
       }}
-    >
-      DVD
-    </div>
+    />
   );
 };
 
-
-// --- Main App Component ---
-// This is an example of how you would use the BouncingDVDLogo component.
-const App = () => {
-  return (
-    <div style={{
-      width: '100vw',
-      height: '100vh',
-      backgroundColor: '#333',
-      overflow: 'hidden' // Hide scrollbars
-    }}>
-      {/* You can just drop the component anywhere in your app */}
-      <BouncingDVDLogo />
-    </div>
-  );
-};
-
-export default App;
+export default BouncingDVDLogo;

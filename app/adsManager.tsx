@@ -2,6 +2,7 @@
 import { useState, createContext, useContext, FC, ReactNode } from 'react';
 import WinRARPopup from './ads/winrar';
 import NormalAdPopup from './ads/cd';
+import ExplodeAdPopup from './ads/explode';
 import { AdType } from './types';
 
 // Define a type for each ad instance, giving it a unique ID
@@ -19,7 +20,7 @@ const AdManagerContext = createContext<AdManagerContextType | undefined>(undefin
 export const AdProvider: FC<{ children: ReactNode }> = ({ children }) => {
   // 1. State is now an array of ad instances, not a single ad
   const [activeAds, setActiveAds] = useState<AdInstance[]>([]);
-  const adOptions: AdType[] = ['winrar', 'normal'];
+  const adOptions: AdType[] = ['winrar', 'normal', 'explode'];
 
   const showAdPopup = () => {
     const newAd: AdInstance = {
@@ -46,6 +47,9 @@ export const AdProvider: FC<{ children: ReactNode }> = ({ children }) => {
         }
         if (ad.type === 'normal') {
           return <NormalAdPopup key={ad.id} onClose={() => closeAdPopup(ad.id)} />;
+        }
+        if (ad.type === 'explode') {
+          return <ExplodeAdPopup key={ad.id} onClose={() => closeAdPopup(ad.id)} />;
         }
         return null;
       })}

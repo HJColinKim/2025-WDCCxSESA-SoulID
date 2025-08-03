@@ -1,5 +1,5 @@
 import { Phone, PhoneOff } from 'lucide-react';
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 
 // Define the props for the component
 type SkypeCallPopupProps = {
@@ -8,13 +8,24 @@ type SkypeCallPopupProps = {
 };
 
 const SkypeCallPopup: React.FC<SkypeCallPopupProps> = ({ callerName, onDecline }) => {
+
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+useEffect(() => {
+  audioRef.current?.play().catch(error => {
+    console.log("Audio autoplay was blocked by the browser.", error);
+  });
+}, []);
+
   return (
     // This popup is fixed to the bottom-right of the screen
     <div 
       className="fixed bottom-5 right-5 z-50 font-sans animate-in fade-in-5 slide-in-from-bottom-5 duration-500"
       style={{ fontFamily: 'Courier-New, Monospace' }} // <-- THIS IS THE ONLY CHANGE
     >
-      <div className="bg-white rounded-lg shadow-2xl w-80 border border-gray-300 overflow-hidden">
+
+      <audio ref={audioRef} src="/audio/skype.mp3" />
+      <div className="bg-white rounded-lg shadow- 2xl w-80 border border-gray-300 overflow-hidden">
         {/* Header section with Skype's classic blue */}
         <div className="bg-[#00aff0] p-3 flex items-center gap-3">
           <img

@@ -13,16 +13,24 @@ const nigerianNames = [
 ];
 
 // Define the props for the component, including the onClose function
-type NigerianPrincePopupProps = {
+type NigerianPrincePopup = {
   onClose: () => void;
+  onReply: (princeName: string) => void;
 };
 
-const NigerianPrincePopup: React.FC<NigerianPrincePopupProps> = ({ onClose }) => {
+const NigerianPrincePopup: React.FC<NigerianPrincePopup> = ({ onClose, onReply }) => {
   // State to hold the random position
   const [position, setPosition] = useState({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
   
   // 1. Add state to hold the randomly selected name for this popup instance
   const [princeName, setPrinceName] = useState(nigerianNames[0]);
+
+  const handleReplyClick = () => {
+  // Call the onReply function passed from the parent (AdManager)
+  // and send the current prince's name back up.
+  console.log()
+  onReply(princeName);
+};
 
   // Calculate a random position and name when the component first loads
   useEffect(() => {
@@ -57,7 +65,7 @@ const NigerianPrincePopup: React.FC<NigerianPrincePopupProps> = ({ onClose }) =>
             <span className="text-sm font-bold">URGENT & CONFIDENTIAL</span>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleReplyClick}
             className="w-4 h-4 bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-black border-b-black text-black text-xs flex items-center justify-center hover:bg-[#d0d0d0]"
           >
             <X className="w-3 h-3" />
@@ -89,7 +97,9 @@ const NigerianPrincePopup: React.FC<NigerianPrincePopupProps> = ({ onClose }) =>
             
             {/* Buttons */}
             <div className="flex gap-2 mt-2 justify-end">
-               <button className="bg-green-600 text-white border-2 border-t-white border-l-white border-r-black border-b-black px-4 py-1 text-sm hover:bg-green-700">
+               <button 
+               onClick={handleReplyClick}
+               className="bg-green-600 text-white border-2 border-t-white border-l-white border-r-black border-b-black px-4 py-1 text-sm hover:bg-green-700">
                 Reply Now!
               </button>
               <button onClick={onClose} className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-4 py-1 text-sm hover:bg-[#d0d0d0]">

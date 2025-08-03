@@ -9,6 +9,7 @@ import BouncingDVDLogo from './ads/dvd';
 import DownloadGpuPopupProps from './ads/gpu';
 import ApproachingThreatPopupProps from './ads/approach'; 
 import SoulIdPopup from './ads/soulid'; 
+import SkypeCallPopupProps from './ads/skype'; 
 import { AdType } from './types';
 
 
@@ -27,6 +28,9 @@ const AdManagerContext = createContext<AdManagerContextType | undefined>(undefin
 export const AdProvider: FC<{ children: ReactNode }> = ({ children }) => {
   // 1. State is now an array of ad instances, not a single ad
   const [activeAds, setActiveAds] = useState<AdInstance[]>([]);
+
+  const [skypeCall, setSkypeCall] = useState<{ active: boolean; callerName: string }>({ active: false, callerName: '' });
+
   const adOptions: AdType[] = ['winrar', 'normal', 'explode', 'crazy', 'socialcredits', 'dvd', 'gpu', 'approach', 'soulid'];
 
   const showAdPopup = () => {
@@ -41,6 +45,11 @@ export const AdProvider: FC<{ children: ReactNode }> = ({ children }) => {
   // 3. The close function now needs the ID of the ad to close
   const closeAdPopup = (id: number) => {
     setActiveAds((currentAds) => currentAds.filter((ad) => ad.id !== id));
+  };
+
+  const handlePrinceReply = (id: number, princeName: string) => {
+    closeAdPopup(id); // Close the Nigerian Prince ad
+    setSkypeCall({ active: true, callerName: princeName }); // Show the Skype ad with the correct name
   };
 
   return (
@@ -59,7 +68,7 @@ export const AdProvider: FC<{ children: ReactNode }> = ({ children }) => {
           return <ExplodeAdPopup key={ad.id} onClose={() => closeAdPopup(ad.id)} />;
         }
         if (ad.type == 'crazy') {
-          return <NigerianPrincePopup key={ad.id} onClose={() => closeAdPopup(ad.id)} />;
+          return <NigerianPrincePopup key={ad.id} onClose={() => closeAdPopup(ad.id)} onReply={(princeName) => handlePrinceReply(ad.id, princeName)}/>;
         } 
 
         if (ad.type == 'socialcredits'){
@@ -83,7 +92,14 @@ export const AdProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
         return null;
       })}
-    </AdManagerContext.Provider>
+    {/* 5. Conditionally render the Skype popup when its state is active */}
+      {skypeCall.active && (
+        <SkypeCallPopupProps 
+          callerName={skypeCall.callerName} 
+          onDecline={() => setSkypeCall({ active: false, callerName: '' })} 
+        />
+      )}
+    </AdManagerContext.Provider>
   );
 };
 

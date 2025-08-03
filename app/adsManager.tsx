@@ -9,43 +9,57 @@ import BouncingDVDLogo from './ads/dvd';
 import DownloadGpuPopupProps from './ads/gpu';
 import { AdType } from './types';
 
-
 // Define a type for each ad instance, giving it a unique ID
 type AdInstance = {
   id: number;
   type: AdType;
 };
 
+// --- 1. Add new state and toggle function to the context type ---
 type AdManagerContextType = {
   showAdPopup: () => void;
+  closeAllAds: () => void;
+  togglePopupGeneration: () => void;
+  popupsEnabled: boolean;
 };
 
 const AdManagerContext = createContext<AdManagerContextType | undefined>(undefined);
 
 export const AdProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  // 1. State is now an array of ad instances, not a single ad
   const [activeAds, setActiveAds] = useState<AdInstance[]>([]);
+  // --- 2. Add state to track if popups are enabled ---
+  const [popupsEnabled, setPopupsEnabled] = useState(true); // Enabled by default
   const adOptions: AdType[] = ['winrar', 'normal', 'explode', 'crazy', 'socialcredits', 'dvd', 'gpu'];
 
   const showAdPopup = () => {
+    // --- 3. Prevent new popups if the setting is disabled ---
+    if (!popupsEnabled) return;
+
     const newAd: AdInstance = {
       id: Date.now(), // Use a timestamp for a simple unique ID
       type: adOptions[Math.floor(Math.random() * adOptions.length)],
     };
-    // 2. Add the new ad to the array instead of replacing it
     setActiveAds((currentAds) => [...currentAds, newAd]);
   };
 
-  // 3. The close function now needs the ID of the ad to close
   const closeAdPopup = (id: number) => {
     setActiveAds((currentAds) => currentAds.filter((ad) => ad.id !== id));
   };
+  
+  const closeAllAds = () => {
+    setActiveAds([]);
+  };
+
+  // --- 4. Create the function to toggle the setting ---
+  const togglePopupGeneration = () => {
+    setPopupsEnabled((currentValue) => !currentValue);
+  };
 
   return (
-    <AdManagerContext.Provider value={{ showAdPopup }}>
+    // --- 5. Provide the new function and state through the context ---
+    <AdManagerContext.Provider value={{ showAdPopup, closeAllAds, togglePopupGeneration, popupsEnabled }}>
       {children}
 
-      {/* 4. Map over the array to render all active ads */}
       {activeAds.map((ad) => {
         if (ad.type === 'winrar') {
           return <WinRARPopup key={ad.id} onClose={() => closeAdPopup(ad.id)} />;
@@ -59,16 +73,14 @@ export const AdProvider: FC<{ children: ReactNode }> = ({ children }) => {
         if (ad.type == 'crazy') {
           return <NigerianPrincePopup key={ad.id} onClose={() => closeAdPopup(ad.id)} />;
         } 
-
         if (ad.type == 'socialcredits'){
-          return < SocialCreditsPopupProps key={ad.id} onClose={() => closeAdPopup(ad.id)} />;
+          return <SocialCreditsPopupProps key={ad.id} onClose={() => closeAdPopup(ad.id)} />;
         }
         if (ad.type === 'dvd') {
           return <BouncingDVDLogo key={ad.id} />;
         }
-
         if (ad.type === 'gpu'){
-          return < DownloadGpuPopupProps key={ad.id} onClose={() => closeAdPopup(ad.id)} />;
+          return <DownloadGpuPopupProps key={ad.id} onClose={() => closeAdPopup(ad.id)} />;
         }
 
         return null;

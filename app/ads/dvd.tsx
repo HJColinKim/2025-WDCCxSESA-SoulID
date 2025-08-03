@@ -3,8 +3,15 @@ import React, { useState, useEffect, useRef } from 'react';
 // --- Bouncing DVD Logo Component ---
 // This self-contained component creates the classic bouncing logo effect.
 const BouncingDVDLogo = () => {
-  // State for the logo's position (top, left)
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  // State for the logo's position, initialized to a random spot on the screen
+  const [position, setPosition] = useState(() => {
+    const logoWidth = 150; // Must match the CSS width below
+    const logoHeight = 70;  // An approximation of the logo's height for positioning
+    const x = Math.random() * (window.innerWidth - logoWidth);
+    const y = Math.random() * (window.innerHeight - logoHeight);
+    return { x, y };
+  });
+
   // State for the logo's direction vector
   const [direction, setDirection] = useState({ dx: 1, dy: 1 });
   // Ref to hold the animation frame request
@@ -84,7 +91,7 @@ const BouncingDVDLogo = () => {
         width: '150px', // Example width, adjust as needed
         height: 'auto',
         userSelect: 'none',
-        zIndex: 9999,
+        zIndex: 9998, // Positioned just below the settings modal (z-9999)
       }}
     />
   );

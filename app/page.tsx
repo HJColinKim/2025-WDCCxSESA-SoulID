@@ -87,6 +87,8 @@ function PokemonCoopGame() {
   const [showSettings, setShowSettings] = useState(false)
 
   const { showAdPopup } = useAdManager();
+  const { closeAllAds, togglePopupGeneration, popupsEnabled } = useAdManager();
+
   const clickAudioRef = useRef<HTMLAudioElement>(null);
   const errorAudioRef = useRef<HTMLAudioElement>(null);
 
@@ -101,6 +103,11 @@ function PokemonCoopGame() {
         // Ignore audio play errors
       });
     }
+  };
+
+  const handleButtonClick = () => {
+    closeAllAds();          // First, close all existing ads
+    togglePopupGeneration(); // Then, toggle the setting
   };
 
   // Play error sound
@@ -608,8 +615,9 @@ function PokemonCoopGame() {
                   <p className="text-xs mb-3">Choose your preferred display mode:</p>
 
                   {/* This button does NOT close the popup */}
-                  <button className="w-full h-8 px-3 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold">
-                    {"Switch to Dark Mode"}
+                  <button className="w-full h-8 px-3 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold" onClick={handleButtonClick}>
+                    {/* 3. Use the state to display the correct text */}
+                    {popupsEnabled ? 'Disable Popup Generation' : 'Enable Popup Generation'}
                   </button>
                 </div>
               </div>

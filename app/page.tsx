@@ -973,21 +973,21 @@ function PokemonCoopGame() {
                         className={`w-full h-8 px-3 border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold ${difficulty === 'easy' ? 'bg-gray-400' : 'bg-[#c0c0c0]'}`}
                         onClick={() => setDifficulty('easy')}
                       >
-                        Easy (10s intervals)
+                        Easy
                       </button>
 
                       <button
                         className={`w-full h-8 px-3 border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold ${difficulty === 'medium' ? 'bg-gray-400' : 'bg-[#c0c0c0]'}`}
                         onClick={() => setDifficulty('medium')}
                       >
-                        Medium (5s intervals)
+                        Medium
                       </button>
 
                       <button
                         className={`w-full h-8 px-3 border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold ${difficulty === 'hard' ? 'bg-gray-400' : 'bg-[#c0c0c0]'}`}
                         onClick={() => setDifficulty('hard')}
                       >
-                        Hard (1s intervals)
+                        Hard
                       </button>
 
                       <button

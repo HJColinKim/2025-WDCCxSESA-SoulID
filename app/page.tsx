@@ -2,16 +2,16 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { 
-  Volume2, 
-  VolumeX, 
-  Minimize2, 
-  X, 
-  Square, 
-  Play, 
-  Pause, 
-  Settings, 
-  Minus 
+import {
+  Volume2,
+  VolumeX,
+  Minimize2,
+  X,
+  Square,
+  Play,
+  Pause,
+  Settings,
+  Minus
 } from "lucide-react";
 import { AdProvider, useAdManager } from "./adsManager";
 
@@ -76,6 +76,11 @@ function PokemonCoopGame() {
   const [showWinRARPopup, setShowWinRARPopup] = useState(false)
   const [audioPlaying, setAudioPlaying] = useState(false)
   const [audioEnabled, setAudioEnabled] = useState(true)
+  // Add new state for controlling click and error sounds
+  const [clickSoundsEnabled, setClickSoundsEnabled] = useState(true)
+  const [errorSoundsEnabled, setErrorSoundsEnabled] = useState(true)
+  // Add difficulty state
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard" | "disabled">("medium")
   // Add chat-related state
   const [showChatPopup, setShowChatPopup] = useState(false)
   const [chatMessages, setChatMessages] = useState<Array<{ text: string, sender: 'user' | 'character' }>>([])
@@ -102,7 +107,7 @@ function PokemonCoopGame() {
 
   // Play click sound
   const playClickSound = () => {
-    if (clickAudioRef.current) {
+    if (clickAudioRef.current && clickSoundsEnabled) {
       clickAudioRef.current.currentTime = 0;
       clickAudioRef.current.play().catch(() => {
         // Ignore audio play errors
@@ -117,7 +122,7 @@ function PokemonCoopGame() {
 
   // Play error sound
   const playErrorSound = () => {
-    if (errorAudioRef.current) {
+    if (errorAudioRef.current && errorSoundsEnabled) {
       const errorSounds = ['error1.mp3', 'error2.mp3', 'error3.mp3'];
       const randomError = errorSounds[Math.floor(Math.random() * errorSounds.length)];
       errorAudioRef.current.src = `/audio/${randomError}`;
@@ -311,7 +316,7 @@ function PokemonCoopGame() {
     return () => {
       document.removeEventListener('click', handleGlobalClick);
     };
-  }, []);
+  }, [clickSoundsEnabled]); // Add clickSoundsEnabled to dependencies so the handler updates when the setting changes
 
   useEffect(() => {
     const updateTime = () => {
@@ -331,16 +336,33 @@ function PokemonCoopGame() {
   }, [])
 
   useEffect(() => {
+    // Only set up the timer if popups are not disabled
+    if (difficulty === "disabled" || !popupsEnabled) {
+      return; // Don't create any timer
+    }
+
+    // Get popup interval based on difficulty
+    const getPopupInterval = () => {
+      switch (difficulty) {
+        case "easy": return 10000; // 10 seconds
+        case "medium": return 5000; // 5 seconds  
+        case "hard": return 1000; // 1 second
+        default: return 5000;
+      }
+    };
+
     const adTimer = setInterval(() => {
       // You can call this from anywhere now!
       showAdPopup();   //Disable this line for accessibility mode 
-      //playErrorSound(); // Play error sound when a popup is shown
-    }, 1000); // Trigger a random ad every 15 seconds
+      if (errorSoundsEnabled) {
+        playErrorSound(); // Play error sound when a popup is shown only if enabled
+      }
+    }, getPopupInterval()); // Use difficulty-based interval
 
     return () => {
       clearInterval(adTimer);
     };
-  }, [showAdPopup]);
+  }, [showAdPopup, difficulty, errorSoundsEnabled, popupsEnabled]); // Add popupsEnabled to dependencies
 
   const startGame = () => {
     playClickSound();
@@ -753,7 +775,7 @@ function PokemonCoopGame() {
               <div className="text-center">
                 <button
                   onClick={startGame}
-                  className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-8 py-4 text-xl font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white transform active:translate-x-0.5 active:translate-y-0.5"
+                  className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-8 py-4 text-xl font-bold hover:bg-[#d0d0d0] active:border-t-[#808080] active:border-l-[#808080] active:border-r-white active:border-b-white"
                 >
                   🎯 PLAY GAME
                 </button>
@@ -822,87 +844,139 @@ function PokemonCoopGame() {
         </div>
 
         {/* Taskbar */}
-      <div className="fixed bottom-0 left-0 right-0 h-10 bg-[#c0c0c0] border-t-2 border-white border-l-2 border-r border-b border-gray-600 border-r-gray-600 flex items-center px-1">
-        {/* Settings Button */}
-        <button
-          onClick={() => setShowSettings(true)}
-          className="h-8 px-4 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 flex items-center gap-1 text-sm font-bold"
-        >
-          <Settings size={14} />
-          Settings
-        </button>
+        <div className="fixed bottom-0 left-0 right-0 h-10 bg-[#c0c0c0] border-t-2 border-white border-l-2 border-r border-b border-gray-600 border-r-gray-600 flex items-center px-1">
+          {/* Settings Button */}
+          <button
+            onClick={() => setShowSettings(true)}
+            className="h-8 px-4 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 flex items-center gap-1 text-sm font-bold"
+          >
+            <Settings size={14} />
+            Settings
+          </button>
 
-        {/* Taskbar Center Area */}
-        <div className="flex-1 mx-2">{/* Empty space for running applications */}</div>
+          {/* Taskbar Center Area */}
+          <div className="flex-1 mx-2">{/* Empty space for running applications */}</div>
 
-        {/* System Tray and Clock */}
-        <div className="flex items-center">
-          <div className="h-6 px-2 bg-[#c0c0c0] border border-gray-600 border-t-gray-600 border-l-gray-600 border-r-white border-b-white flex items-center">
-            <span className="text-xs font-mono">{currentTime}</span>
+          {/* System Tray and Clock */}
+          <div className="flex items-center">
+            <div className="h-6 px-2 bg-[#c0c0c0] border border-gray-600 border-t-gray-600 border-l-gray-600 border-r-white border-b-white flex items-center">
+              <span className="text-xs font-mono">{currentTime}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Settings Dialog */}
-      {showSettings && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-          <div className="bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 w-96 shadow-lg">
-            {/* Title Bar */}
-            <div className="bg-gradient-to-r from-blue-800 to-blue-600 text-white px-2 py-1 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Settings size={16} />
-                <span className="text-sm font-bold">Settings</span>
-              </div>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200"
-                >
-                  <Minus size={8} />
-                </button>
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200"
-                >
-                  <X size={8} />
-                </button>
-              </div>
-            </div>
-
-            {/* Dialog Content */}
-            <div className="p-4">
-              <div className="mb-4">
-                <h3 className="text-sm font-bold mb-2">Display Settings</h3>
-                <div className="border border-gray-600 border-t-gray-600 border-l-gray-600 border-r-white border-b-white p-3 bg-white">
-                  <p className="text-xs mb-3">Choose your preferred display mode:</p>
-
-                  {/* This button does NOT close the popup */}
-                  <button className="w-full h-8 px-3 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold" onClick={handleButtonClick}>
-                    {/* 3. Use the state to display the correct text */}
-                    {popupsEnabled ? 'Disable Popup Generation' : 'Enable Popup Generation'}
+        {/* Settings Dialog */}
+        {showSettings && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+            <div className="bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 w-96 shadow-lg">
+              {/* Title Bar */}
+              <div className="bg-gradient-to-r from-blue-800 to-blue-600 text-white px-2 py-1 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Settings size={16} />
+                  <span className="text-sm font-bold">Settings</span>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setShowSettings(false)}
+                    className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200"
+                  >
+                    <Minus size={8} />
+                  </button>
+                  <button
+                    onClick={() => setShowSettings(false)}
+                    className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200"
+                  >
+                    <X size={8} />
                   </button>
                 </div>
               </div>
 
-              {/* Dialog Buttons */}
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="px-4 py-1 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold"
-                >
-                  OK
-                </button>
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="px-4 py-1 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold"
-                >
-                  Cancel
-                </button>
+              {/* Dialog Content */}
+              <div className="p-4">
+                {/* Audio Settings */}
+                <div className="mb-4">
+                  <h3 className="text-sm font-bold mb-2">Audio Settings</h3>
+                  <div className="border border-gray-600 border-t-gray-600 border-l-gray-600 border-r-white border-b-white p-3 bg-white">
+                    <p className="text-xs mb-3">Control sound effects:</p>
+
+                    <div className="space-y-2">
+                      <button
+                        className="w-full h-8 px-3 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold"
+                        onClick={() => setClickSoundsEnabled(!clickSoundsEnabled)}
+                      >
+                        {clickSoundsEnabled ? 'Disable Click Sounds' : 'Enable Click Sounds'}
+                      </button>
+
+                      <button
+                        className="w-full h-8 px-3 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold"
+                        onClick={() => setErrorSoundsEnabled(!errorSoundsEnabled)}
+                      >
+                        {errorSoundsEnabled ? 'Disable Error Sounds' : 'Enable Error Sounds'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Difficulty Settings */}
+                <div className="mb-4">
+                  <h3 className="text-sm font-bold mb-2">Difficulty Settings</h3>
+                  <div className="border border-gray-600 border-t-gray-600 border-l-gray-600 border-r-white border-b-white p-3 bg-white">
+                    <p className="text-xs mb-3">Choose popup frequency:</p>
+
+                    <div className="space-y-2">
+                      <button
+                        className={`w-full h-8 px-3 border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold ${difficulty === 'easy' ? 'bg-gray-400' : 'bg-[#c0c0c0]'}`}
+                        onClick={() => setDifficulty('easy')}
+                      >
+                        Easy (10s intervals)
+                      </button>
+
+                      <button
+                        className={`w-full h-8 px-3 border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold ${difficulty === 'medium' ? 'bg-gray-400' : 'bg-[#c0c0c0]'}`}
+                        onClick={() => setDifficulty('medium')}
+                      >
+                        Medium (5s intervals)
+                      </button>
+
+                      <button
+                        className={`w-full h-8 px-3 border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold ${difficulty === 'hard' ? 'bg-gray-400' : 'bg-[#c0c0c0]'}`}
+                        onClick={() => setDifficulty('hard')}
+                      >
+                        Hard (1s intervals)
+                      </button>
+
+                      <button
+                        className={`w-full h-8 px-3 border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold ${difficulty === 'disabled' ? 'bg-gray-400' : 'bg-[#c0c0c0]'}`}
+                        onClick={() => {
+                          setDifficulty('disabled');
+                          closeAllAds(); // Close all existing popups when disabled is selected
+                        }}
+                      >
+                        Disabled (No popups)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dialog Buttons */}
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowSettings(false)}
+                    className="px-4 py-1 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold"
+                  >
+                    OK
+                  </button>
+                  <button
+                    onClick={() => setShowSettings(false)}
+                    className="px-4 py-1 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     )
   }

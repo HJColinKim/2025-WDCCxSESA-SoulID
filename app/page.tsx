@@ -1,9 +1,19 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Input } from "@/components/ui/input"
-import { Volume2, VolumeX, Minimize2, X, Square, Play, Pause } from "lucide-react"
-import { AdProvider, useAdManager } from "./adsManager"
+import { useState, useEffect, useRef } from "react";
+import { Input } from "@/components/ui/input";
+import { 
+  Volume2, 
+  VolumeX, 
+  Minimize2, 
+  X, 
+  Square, 
+  Play, 
+  Pause, 
+  Settings, 
+  Minus 
+} from "lucide-react";
+import { AdProvider, useAdManager } from "./adsManager";
 
 // Mock Pokémon dataset with audio simulation
 const pokemonData = [
@@ -73,6 +83,8 @@ function PokemonCoopGame() {
   const audioRef = useRef<HTMLAudioElement>(null)
   const guessCountRef = useRef(0);
   const gameLogRef = useRef<HTMLDivElement>(null);
+  const [currentTime, setCurrentTime] = useState("")
+  const [showSettings, setShowSettings] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [audioDuration, setAudioDuration] = useState(0);
@@ -80,6 +92,8 @@ function PokemonCoopGame() {
   const [usedPokemonIds, setUsedPokemonIds] = useState<number[]>([]);
 
   const { showAdPopup } = useAdManager();
+  const { closeAllAds, togglePopupGeneration, popupsEnabled } = useAdManager();
+
   const clickAudioRef = useRef<HTMLAudioElement>(null);
   const errorAudioRef = useRef<HTMLAudioElement>(null);
 
@@ -94,6 +108,11 @@ function PokemonCoopGame() {
         // Ignore audio play errors
       });
     }
+  };
+
+  const handleButtonClick = () => {
+    closeAllAds();          // First, close all existing ads
+    togglePopupGeneration(); // Then, toggle the setting
   };
 
   // Play error sound
@@ -293,6 +312,23 @@ function PokemonCoopGame() {
       document.removeEventListener('click', handleGlobalClick);
     };
   }, []);
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date()
+      const timeString = now.toLocaleTimeString("en-US", {
+        hour12: true,
+        hour: "numeric",
+        minute: "2-digit",
+      })
+      setCurrentTime(timeString)
+    }
+
+    updateTime()
+    const interval = setInterval(updateTime, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const adTimer = setInterval(() => {
@@ -785,48 +821,88 @@ function PokemonCoopGame() {
           </div>
         </div>
 
-        {/* WinRAR Popup */}
-        {showWinRARPopup && (
-          <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] w-96">
-              <div className="bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between">
-                <span className="text-sm font-bold">WinRAR</span>
+        {/* Taskbar */}
+      <div className="fixed bottom-0 left-0 right-0 h-10 bg-[#c0c0c0] border-t-2 border-white border-l-2 border-r border-b border-gray-600 border-r-gray-600 flex items-center px-1">
+        {/* Settings Button */}
+        <button
+          onClick={() => setShowSettings(true)}
+          className="h-8 px-4 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 flex items-center gap-1 text-sm font-bold"
+        >
+          <Settings size={14} />
+          Settings
+        </button>
+
+        {/* Taskbar Center Area */}
+        <div className="flex-1 mx-2">{/* Empty space for running applications */}</div>
+
+        {/* System Tray and Clock */}
+        <div className="flex items-center">
+          <div className="h-6 px-2 bg-[#c0c0c0] border border-gray-600 border-t-gray-600 border-l-gray-600 border-r-white border-b-white flex items-center">
+            <span className="text-xs font-mono">{currentTime}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Settings Dialog */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+          <div className="bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 w-96 shadow-lg">
+            {/* Title Bar */}
+            <div className="bg-gradient-to-r from-blue-800 to-blue-600 text-white px-2 py-1 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Settings size={16} />
+                <span className="text-sm font-bold">Settings</span>
+              </div>
+              <div className="flex gap-1">
                 <button
-                  onClick={() => setShowWinRARPopup(false)}
-                  className="w-4 h-4 bg-[#c0c0c0] border border-black text-black text-xs flex items-center justify-center hover:bg-[#d0d0d0]"
+                  onClick={() => setShowSettings(false)}
+                  className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200"
                 >
-                  <X className="w-2 h-2" />
+                  <Minus size={8} />
+                </button>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200"
+                >
+                  <X size={8} />
                 </button>
               </div>
-              <div className="p-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 bg-yellow-400 border border-black flex items-center justify-center text-black font-bold">
-                    !
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold">Your free trial has expired!</p>
-                    <p className="text-xs text-gray-600">Please purchase WinRAR license.</p>
-                    <p className="text-xs text-gray-600">Thank you for using WinRAR.</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <button
-                    onClick={() => setShowWinRARPopup(false)}
-                    className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-4 py-1 text-sm hover:bg-[#d0d0d0]"
-                  >
-                    Buy license
-                  </button>
-                  <button
-                    onClick={() => setShowWinRARPopup(false)}
-                    className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] px-4 py-1 text-sm hover:bg-[#d0d0d0]"
-                  >
-                    Close
+            </div>
+
+            {/* Dialog Content */}
+            <div className="p-4">
+              <div className="mb-4">
+                <h3 className="text-sm font-bold mb-2">Display Settings</h3>
+                <div className="border border-gray-600 border-t-gray-600 border-l-gray-600 border-r-white border-b-white p-3 bg-white">
+                  <p className="text-xs mb-3">Choose your preferred display mode:</p>
+
+                  {/* This button does NOT close the popup */}
+                  <button className="w-full h-8 px-3 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold" onClick={handleButtonClick}>
+                    {/* 3. Use the state to display the correct text */}
+                    {popupsEnabled ? 'Disable Popup Generation' : 'Enable Popup Generation'}
                   </button>
                 </div>
+              </div>
+
+              {/* Dialog Buttons */}
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="px-4 py-1 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold"
+                >
+                  OK
+                </button>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="px-4 py-1 bg-[#c0c0c0] border-2 border-white border-t-white border-l-white border-r-gray-600 border-b-gray-600 hover:border-gray-600 hover:border-t-gray-600 hover:border-l-gray-600 hover:border-r-white hover:border-b-white active:border-gray-400 active:border-t-gray-400 active:border-l-gray-400 active:border-r-gray-200 active:border-b-gray-200 text-xs font-bold"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
       </div>
     )
   }

@@ -297,7 +297,7 @@ function PokemonCoopGame() {
   useEffect(() => {
     const adTimer = setInterval(() => {
       // You can call this from anywhere now!
-      //showAdPopup();   //Disable this line for accessibility mode 
+      showAdPopup();   //Disable this line for accessibility mode 
       //playErrorSound(); // Play error sound when a popup is shown
     }, 1000); // Trigger a random ad every 15 seconds
 

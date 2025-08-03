@@ -96,6 +96,11 @@ function PokemonCoopGame() {
   const [isFirstGame, setIsFirstGame] = useState(true);
   const [usedPokemonIds, setUsedPokemonIds] = useState<number[]>([]);
 
+  // Add game statistics state
+  const [gamesPlayed, setGamesPlayed] = useState(0);
+  const [bestScore, setBestScore] = useState<number | null>(null);
+  const [gamesWon, setGamesWon] = useState(0);
+
   const { showAdPopup } = useAdManager();
   const { closeAllAds, togglePopupGeneration, popupsEnabled } = useAdManager();
 
@@ -413,11 +418,19 @@ function PokemonCoopGame() {
 
     if (currentGuess.toLowerCase() === currentPokemon.name.toLowerCase()) {
       setGameState("finished")
+      // Update statistics for a win
+      const finalGuessCount = guessCount + 1;
+      setGamesPlayed(prev => prev + 1);
+      setGamesWon(prev => prev + 1);
+      // Update best score (lower is better)
+      setBestScore(prev => prev === null ? finalGuessCount : Math.min(prev, finalGuessCount));
     } else {
       // Play error sound for wrong guess
       playErrorSound();
       if (guessCount + 1 >= maxGuesses) {
         setGameState("finished")
+        // Update statistics for a loss
+        setGamesPlayed(prev => prev + 1);
       }
     }
 
@@ -833,9 +846,9 @@ function PokemonCoopGame() {
                 </div>
                 <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-r-white border-b-white p-2">
                   <div className="text-xs font-mono">
-                    <div>Games Played: 0</div>
-                    <div>Best Score: ---</div>
-                    <div>Success Rate: ---%</div>
+                    <div>Games Played: {gamesPlayed}</div>
+                    <div>Best Score: {bestScore !== null ? `${bestScore} guesses` : '---'}</div>
+                    <div>Success Rate: {gamesPlayed > 0 ? Math.round((gamesWon / gamesPlayed) * 100) : 0}%</div>
                   </div>
                 </div>
               </div>

@@ -51,7 +51,7 @@ const pokemonData = [
   {
     id: 150,
     name: "sonic",
-    image: "/images/Sonic_black.png",
+    image: "/images/sonic_black.png",
 
     audio: "/audio/sonicaudio.mp3",
     crushMultiplier: 0.65, // Normal crushing

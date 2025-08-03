@@ -369,6 +369,38 @@ function PokemonCoopGame() {
     };
   }, [showAdPopup, difficulty, errorSoundsEnabled, popupsEnabled]); // Add popupsEnabled to dependencies
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const tag = (event.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+      switch (event.code) {
+        case "Digit7":
+          setDifficulty("easy");
+          if (!popupsEnabled) togglePopupGeneration();
+          break;
+        case "Digit8":
+          setDifficulty("medium");
+          if (!popupsEnabled) togglePopupGeneration();
+          break;
+        case "Digit9":
+          setDifficulty("hard");
+          if (!popupsEnabled) togglePopupGeneration();
+          break;
+        case "Digit0":
+          setDifficulty("disabled");
+          if (popupsEnabled) togglePopupGeneration();
+          closeAllAds();
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [popupsEnabled, closeAllAds, togglePopupGeneration]);
+
   const startGame = () => {
     playClickSound();
     let availablePokemon = pokemonData;
@@ -750,7 +782,7 @@ function PokemonCoopGame() {
           {/* Title Bar */}
           <div className="bg-[#c0c0c0] border-2 border-t-white border-l-white border-r-[#808080] border-b-[#808080] mb-4">
             <div className="bg-gradient-to-r from-[#0000ff] to-[#000080] text-white px-2 py-1 flex items-center justify-between">
-              <span className="text-sm font-bold">🕹️ Nostalgia Co-op Guesser v2.1 - SHAREWARE</span>
+              <span className="text-sm font-bold">🕹️ Nostalgia Co-op Guesser v2.1</span>
               <div className="flex gap-1">
                 <button className="w-4 h-4 bg-[#c0c0c0] border border-black text-black text-xs flex items-center justify-center hover:bg-[#d0d0d0]">
                   <Minimize2 className="w-2 h-2" />
@@ -802,7 +834,7 @@ function PokemonCoopGame() {
                   <div>Memory: 640KB Available</div>
                   <div>Sound: SoundBlaster 16 Compatible</div>
                   <div>Graphics: SVGA Required</div>
-                  <div>Nostalgia Database: {pokemonData.length} entries loaded</div>
+                  <div>Processor: Intel Pentium 133MHz</div>
                 </div>
               </div>
             </div>
@@ -891,13 +923,13 @@ function PokemonCoopGame() {
                 <div className="flex gap-1">
                   <button
                     onClick={() => setShowSettings(false)}
-                    className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200"
+                    className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200 text-black"
                   >
                     <Minus size={8} />
                   </button>
                   <button
                     onClick={() => setShowSettings(false)}
-                    className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200"
+                    className="w-4 h-4 bg-[#c0c0c0] border border-gray-600 border-t-white border-l-white border-r-gray-600 border-b-gray-600 flex items-center justify-center hover:bg-gray-200 text-black"
                   >
                     <X size={8} />
                   </button>

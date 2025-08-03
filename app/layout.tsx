@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Nostalgia Co-op Guesser v2.1 - SHAREWARE',
+  title: 'Nostalgia Co-op Guesser v2.1',
   description: 'Authentic Windows 95 Gaming Experience™ - Work together to guess retro games and characters!',
   icons: {
     icon: [

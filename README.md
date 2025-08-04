@@ -2,6 +2,12 @@
 This project was conceived and brought to life during the largest tertiary Hackathon in NZ: **WDCC x SESA Hackathon** in **August 7th 2025**.
 <br>
 **Deployed Link** : https://nostalgia-trip.vercel.app/
+
+
+
+https://github.com/user-attachments/assets/65e7f38e-7ccb-4c83-b7bf-bad13b1aac04
+
+
 ---
 
 ## 🚀 Take a trip into the past!

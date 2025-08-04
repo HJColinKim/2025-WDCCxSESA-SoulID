@@ -50,4 +50,7 @@ We chose a modern and efficient stack to build our prototype quickly. The main t
 - **React + TypeScript** for the webapp design
 - **Tailwind CSS** for the much-needed enhancing UI visuals
 - **Next.js** for effective deployment of the webapp
-- **Vercel** for deployment (our site is deployed for access) 
+- **Vercel** for deployment (our site is deployed for access)
+  
+---
+Made with ❤️ by the **Soul ID** team

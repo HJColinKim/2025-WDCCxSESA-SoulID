@@ -1,7 +1,7 @@
-# [Nostalgia Guesser]
+# 🕹️ **Nostalgia Guesser **🕹️  
 This project was conceived and brought to life during the largest tertiary Hackathon in NZ: **WDCC x SESA Hackathon** in **August 7th 2025**.
 <br>
-
+**Deployed Link** : https://nostalgia-trip.vercel.app/
 https://github.com/user-attachments/assets/31c2756a-39c9-4e0c-aac1-5c9670662b75
 
 ---

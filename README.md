@@ -1,4 +1,5 @@
-# 🕹️ Nostalgia Guesser 🕹️           🥉 **3RD PLACE WINNER FOR LARGEST TERTIARY HACKACTHON 2025** 🥉
+# 🕹️ Nostalgia Guesser 🕹️           
+🥉 **3RD PLACE WINNER FOR LARGEST TERTIARY HACKACTHON 2025** 🥉
 This project was conceived and brought to life during the largest tertiary Hackathon in NZ: **WDCC x SESA Hackathon** in **August 7th 2025**
 
 
